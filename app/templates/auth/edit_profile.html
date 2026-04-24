@@ -1,0 +1,145 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}Edit Profile - proISDB{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-user-edit me-2"></i>Edit Profile
+                </h2>
+                <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Profile
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-xl-6 col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Personal Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> All fields marked with <span class="text-danger">*</span> are required to submit IS elements.
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('auth.edit_profile') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.first_name.label(class="form-label fw-bold") }}
+                                <span class="text-danger">*</span>
+                                {{ form.first_name(class="form-control", placeholder="Enter your first name") }}
+                                {% if form.first_name.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.first_name.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.last_name.label(class="form-label fw-bold") }}
+                                <span class="text-danger">*</span>
+                                {{ form.last_name(class="form-control", placeholder="Enter your last name") }}
+                                {% if form.last_name.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.last_name.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.institution.label(class="form-label fw-bold") }}
+                            <span class="text-danger">*</span>
+                            {{ form.institution(class="form-control", placeholder="Enter your institution") }}
+                            {% if form.institution.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.institution.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.department.label(class="form-label") }}
+                            {{ form.department(class="form-control", placeholder="Enter your department (optional)") }}
+                            {% if form.department.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.department.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.country.label(class="form-label fw-bold") }}
+                                <span class="text-danger">*</span>
+                                {{ form.country(class="form-control", placeholder="Enter your country") }}
+                                {% if form.country.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.country.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.telephone.label(class="form-label") }}
+                                {{ form.telephone(class="form-control", placeholder="Enter your telephone (optional)") }}
+                                {% if form.telephone.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.telephone.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.email.label(class="form-label fw-bold") }}
+                            <span class="text-danger">*</span>
+                            {{ form.email(class="form-control", placeholder="Enter your email", type="email") }}
+                            {% if form.email.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.email.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                            <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}Batch Import - proISDB{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <h4 class="mb-0"><i class="fas fa-file-import me-2"></i>Batch Import IS Elements</h4>
+        </div>
+        <div class="card-body">
+          <p class="text-muted">Upload a .xlsx or .csv file to add multiple IS elements at once.</p>
+
+          {% if error_details %}
+          <div class="alert alert-danger">
+            <h6>Import Errors:</h6>
+            <ul>
+              {% for error in error_details %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+          <h6 class="mt-3">Template specification</h6>
+          <ul class="small text-muted">
+            <li>The first row must be column headers.</li>
+            <li>Required column: <code>name</code> (IS element name). Only <code>name</code> is required for admin imports — the current admin user will be recorded as the submitter automatically.</li>
+            <li>Optional columns: other columns listed in the template (e.g. <code>family</code>, <code>group</code>, <code>mge_type</code>, <code>host</code>, <code>accession_number</code>, <code>synomyns</code>, <code>iso</code>, <code>origin</code>, <code>is_length</code>, <code>orf1</code>, <code>orf_1</code>, <code>comment</code>, <code>references</code>, etc.).</li>
+            <li>Header names are lower-cased during validation; use the template for exact column names.</li>
+            <li><strong>Do not include submitter/reviewer/status/timestamp columns</strong> (for example: <code>submitter_first_name</code>, <code>submitter_last_name</code>, <code>submitter_id</code>, <code>reviewer_id</code>, <code>submission_date</code>, <code>review_date</code>, <code>review_comment</code>, <code>status</code>, <code>created_at</code>, <code>updated_at</code>) — these will be set automatically to the current admin and system values during import.</li>
+            <li>CSV encoding should be UTF-8.</li>
+          </ul>
+
+          <form method="POST" action="{{ url_for('admin.import_is_elements') }}" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label class="form-label">Choose file</label>
+              <input type="file" name="file" class="form-control" accept=".xlsx,.csv" required>
+            </div>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary"><i class="fas fa-upload me-1"></i>Import</button>
+              <a href="{{ url_for('admin.is_elements') }}" class="btn btn-outline-secondary">Back</a>
+            </div>
+          </form>
+
+          <hr>
+          <h6>Download sample</h6>
+          <div>
+            <a class="btn btn-sm btn-outline-success" href="{{ url_for('static', filename='templates/is_element_template_latest.xlsx') }}" download>
+              <i class="fas fa-download me-1"></i>Download Latest Excel Template
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

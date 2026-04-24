@@ -1,0 +1,198 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}BLAST数据库管理 - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- 页面标题 -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-database"></i> BLAST数据库管理</h2>
+                <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+            </div>
+
+            <!-- BLAST+安装状态 -->
+            <div class="alert alert-{% if blast_installed %}success{% else %}danger{% endif %} mb-4">
+                <h5 class="alert-heading">
+                    <i class="fas fa-{% if blast_installed %}check-circle{% else %}exclamation-triangle{% endif %}"></i>
+                    BLAST+ 状态
+                </h5>
+                {% if blast_installed %}
+                    <p class="mb-0">✓ BLAST+ 已安装并可用</p>
+                {% else %}
+                    <p class="mb-0">✗ BLAST+ 未安装。请运行: <code>sudo apt install ncbi-blast+</code></p>
+                {% endif %}
+            </div>
+
+            <!-- 数据库状态卡片 -->
+            <div class="row mb-4">
+                <!-- 核酸数据库 -->
+                <div class="col-md-6">
+                    <div class="card {% if db_info.nucleotide.exists %}border-success{% else %}border-warning{% endif %}">
+                        <div class="card-header bg-{% if db_info.nucleotide.exists %}success{% else %}warning{% endif %} text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-dna"></i> 核酸数据库 (blastn)
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if db_info.nucleotide.exists %}
+                                <p><strong>状态:</strong> <span class="badge bg-success">已创建</span></p>
+                                <p><strong>序列数量:</strong> {{ db_info.nucleotide.sequences }} 条</p>
+                                <p><strong>文件大小:</strong> {{ "%.2f"|format(db_info.nucleotide.file_size) }} MB</p>
+                                <p><strong>更新时间:</strong> {{ db_info.nucleotide.update_time.strftime('%Y-%m-%d %H:%M:%S') if db_info.nucleotide.update_time else 'N/A' }}</p>
+                            {% else %}
+                                <p><strong>状态:</strong> <span class="badge bg-warning">未创建</span></p>
+                                <p class="text-muted">数据库尚未创建，请点击下方按钮构建。</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 蛋白数据库 -->
+                <div class="col-md-6">
+                    <div class="card {% if db_info.protein.exists %}border-success{% else %}border-warning{% endif %}">
+                        <div class="card-header bg-{% if db_info.protein.exists %}success{% else %}warning{% endif %} text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-project-diagram"></i> 蛋白数据库 (blastp)
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if db_info.protein.exists %}
+                                <p><strong>状态:</strong> <span class="badge bg-success">已创建</span></p>
+                                <p><strong>序列数量:</strong> {{ db_info.protein.sequences }} 条</p>
+                                <p><strong>文件大小:</strong> {{ "%.2f"|format(db_info.protein.file_size) }} MB</p>
+                                <p><strong>更新时间:</strong> {{ db_info.protein.update_time.strftime('%Y-%m-%d %H:%M:%S') if db_info.protein.update_time else 'N/A' }}</p>
+                            {% else %}
+                                <p><strong>状态:</strong> <span class="badge bg-warning">未创建</span></p>
+                                <p class="text-muted">数据库尚未创建，请点击下方按钮构建。</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据统计 -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar"></i> 数据统计</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>数据库中IS元素总数:</strong> {{ total_is_elements }} 个</p>
+                    {% if db_info.nucleotide.exists %}
+                        {% if db_info.nucleotide.sequences != total_is_elements %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                BLAST数据库序列数 ({{ db_info.nucleotide.sequences }}) 与IS元素总数 ({{ total_is_elements }}) 不一致，建议重建数据库。
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                数据库与IS元素数据同步。
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-tools"></i> 数据库操作</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">何时需要重建数据库？</h6>
+                        <ul class="mb-0">
+                            <li>首次使用BLAST功能</li>
+                            <li>导入新的IS元素数据后</li>
+                            <li>修改、删除IS元素序列后</li>
+                            <li>BLAST搜索结果异常时</li>
+                        </ul>
+                    </div>
+
+                    <button id="rebuildBtn" class="btn btn-primary btn-lg" {% if not blast_installed %}disabled{% endif %}>
+                        <i class="fas fa-sync-alt"></i> 
+                        {% if db_info.nucleotide.exists %}重建{% else %}创建{% endif %}BLAST数据库
+                    </button>
+                    
+                    {% if not blast_installed %}
+                        <p class="text-danger mt-2 mb-0">
+                            <i class="fas fa-exclamation-circle"></i> 请先安装BLAST+
+                        </p>
+                    {% endif %}
+
+                    <!-- 进度提示 -->
+                    <div id="rebuildProgress" class="mt-3" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">处理中...</span>
+                        </div>
+                        <span class="ms-2">正在重建数据库，请稍候...</span>
+                    </div>
+
+                    <!-- 结果输出 -->
+                    <div id="rebuildOutput" class="mt-3" style="display: none;">
+                        <h6>构建日志:</h6>
+                        <pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('rebuildBtn').addEventListener('click', function() {
+    if (!confirm('确定要重建BLAST数据库吗？\n这个过程可能需要几秒到几分钟，取决于数据量。')) {
+        return;
+    }
+
+    const btn = this;
+    const progress = document.getElementById('rebuildProgress');
+    const output = document.getElementById('rebuildOutput');
+    const outputPre = output.querySelector('pre');
+
+    // 禁用按钮，显示进度
+    btn.disabled = true;
+    progress.style.display = 'block';
+    output.style.display = 'none';
+
+    fetch('{{ url_for("admin.rebuild_blast_database") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token() }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        progress.style.display = 'none';
+        
+        if (data.success) {
+            alert('✓ BLAST数据库重建成功！');
+            outputPre.textContent = data.output;
+            output.style.display = 'block';
+            
+            // 刷新页面显示新状态
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            alert('✗ 重建失败: ' + data.message);
+            if (data.error) {
+                outputPre.textContent = data.error;
+                output.style.display = 'block';
+            }
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        progress.style.display = 'none';
+        alert('✗ 请求失败: ' + error);
+        btn.disabled = false;
+    });
+});
+</script>
+{% endblock %}

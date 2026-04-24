@@ -1,0 +1,162 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}Create Admin - proISDB{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Title -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-user-plus me-2"></i>Create Admin Account
+                </h2>
+                <a href="{{ url_for('admin.manage_admins') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Create Admin Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Admin Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Username -->
+                        <div class="mb-3">
+                            {{ form.username.label(class="form-label fw-bold") }} <span class="text-danger">*</span>
+                            {{ form.username(class="form-control", placeholder="Enter username") }}
+                            {% if form.username.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.username.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            {{ form.email.label(class="form-label fw-bold") }} <span class="text-muted">(Optional)</span>
+                            {{ form.email(class="form-control", placeholder="Enter email address (optional)") }}
+                            {% if form.email.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.email.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Password -->
+                        <div class="mb-3">
+                            {{ form.password.label(class="form-label fw-bold") }} <span class="text-danger">*</span>
+                            {{ form.password(class="form-control", placeholder="Enter password") }}
+                            {% if form.password.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.password.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Password must be at least 6 characters long.</small>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="mb-3">
+                            {{ form.confirm_password.label(class="form-label fw-bold") }} <span class="text-danger">*</span>
+                            {{ form.confirm_password(class="form-control", placeholder="Confirm password") }}
+                            {% if form.confirm_password.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.confirm_password.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- First Name -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.first_name.label(class="form-label fw-bold") }}
+                                {{ form.first_name(class="form-control", placeholder="First name") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.last_name.label(class="form-label fw-bold") }}
+                                {{ form.last_name(class="form-control", placeholder="Last name") }}
+                            </div>
+                        </div>
+
+                        <!-- Institution -->
+                        <div class="mb-3">
+                            {{ form.institution.label(class="form-label fw-bold") }}
+                            {{ form.institution(class="form-control", placeholder="Institution") }}
+                        </div>
+
+                        <!-- Department -->
+                        <div class="mb-3">
+                            {{ form.department.label(class="form-label fw-bold") }}
+                            {{ form.department(class="form-control", placeholder="Department") }}
+                        </div>
+
+                        <!-- Country -->
+                        <div class="mb-3">
+                            {{ form.country.label(class="form-label fw-bold") }}
+                            {{ form.country(class="form-control", placeholder="Country") }}
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create Admin
+                            </button>
+                            <a href="{{ url_for('admin.manage_admins') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-info-circle me-2"></i>Information
+                    </h5>
+                    <ul class="mb-0">
+                        <li>Admin accounts can manage IS elements, articles, and user submissions.</li>
+                        <li>Only ROOT users can create, disable, or delete admin accounts.</li>
+                        <li>Admin accounts cannot be deleted if they have associated data.</li>
+                        <li>Make sure to save the password securely.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

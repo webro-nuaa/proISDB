@@ -1,0 +1,585 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}{{ title }} - proISDB{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-{{ 'edit' if element else 'plus' }} me-2"></i>{{ title }}
+                </h2>
+                <a href="{{ url_for('admin.is_elements') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ action_url }}" class="needs-validation" novalidate>
+        {{ form.hidden_tag() }}
+        
+        <!-- 显示表单错误 -->
+        {% if form.errors %}
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Form Validation Failed</h5>
+                    <ul class="mb-0">
+                        {% for field_name, errors in form.errors.items() %}
+                            {% if field_name != 'csrf_token' %}
+                                <li><strong>{{ form[field_name].label.text }}:</strong>
+                                    {% for error in errors %}
+                                        {{ error }}{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="row">
+            <!-- 主要信息区 -->
+            <div class="col-lg-8">
+                <!-- 隐藏的提交者信息字段（仅用于submission表单） -->
+                {% if form.first_name is defined %}
+                <div style="display:none;">
+                    {{ form.first_name() }}
+                    {{ form.last_name() }}
+                    {{ form.email() }}
+                    {{ form.institution() }}
+                    {{ form.department() }}
+                    {{ form.country() }}
+                    {{ form.telephone() }}
+                    {{ form.postal_address() }}
+                    {{ form.postal_code() }}
+                </div>
+                {% endif %}
+                
+                <!-- 基本信息 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Basic Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.name.label(class="form-label fw-bold") }} <span class="text-danger">*</span>
+                                {{ form.name(class="form-control", placeholder="e.g., IS1") }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.name.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.family.label(class="form-label fw-bold") }}
+                                {{ form.family(class="form-control", placeholder="e.g., IS1 family") }}
+                                {% if form.family.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.family.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.group.label(class="form-label fw-bold") }}
+                                {{ form.group(class="form-control", placeholder="IS group") }}
+                                {% if form.group.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.group.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.mge_type.label(class="form-label fw-bold") }}
+                                {{ form.mge_type(class="form-select") }}
+                                {% if form.mge_type.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.mge_type.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.is_length.label(class="form-label fw-bold") }}
+                                <div class="input-group">
+                                    {{ form.is_length(class="form-control", placeholder="768") }}
+                                    <span class="input-group-text">bp</span>
+                                </div>
+                                {% if form.is_length.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.is_length.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.host.label(class="form-label fw-bold") }}
+                                {{ form.host(class="form-control", placeholder="e.g., Escherichia coli") }}
+                                {% if form.host.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.host.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.orf_number.label(class="form-label fw-bold") }}
+                                {{ form.orf_number(class="form-control", placeholder="1") }}
+                                {% if form.orf_number.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.orf_number.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Basic Fields -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.synomyns.label(class="form-label fw-bold") }}
+                                {{ form.synomyns(class="form-control", placeholder="Synonyms") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.iso.label(class="form-label fw-bold") }}
+                                {{ form.iso(class="form-control", placeholder="ISO short name") }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.related_element_s.label(class="form-label fw-bold") }}
+                                {{ form.related_element_s(class="form-control", placeholder="Related elements") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.isoform.label(class="form-label fw-bold") }}
+                                {{ form.isoform(class="form-control", placeholder="Isoform") }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.transposition.label(class="form-label fw-bold") }}
+                            {{ form.transposition(class="form-control", placeholder="Transposition information") }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 序列信息 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-dna me-2"></i>Sequence Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ form.is_sequence.label(class="form-label fw-bold") }}
+                            {{ form.is_sequence(class="form-control font-monospace", rows="8", placeholder="ATCGATCGATCG...") }}
+                            {% if form.is_sequence.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.is_sequence.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Please enter DNA sequence with only A, T, C, G characters
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">Sequence length: <span id="sequence-length">0</span> bp</small>
+                            </div>
+                        </div>
+                        
+                        <!-- left_flank 和 right_flank 是自动从 is_sequence 计算的 @property，不需要表单字段 -->
+                    </div>
+                </div>
+
+                <!-- 基因和功能信息 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cogs me-2"></i>Gene and Function Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Basic ORF Info -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                {{ form.orf_number.label(class="form-label fw-bold") }}
+                                {{ form.orf_number(class="form-control", placeholder="Number of ORFs") }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.tam.label(class="form-label fw-bold") }}
+                                {{ form.tam(class="form-control", placeholder="TAM") }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.length.label(class="form-label fw-bold") }}
+                                {{ form.length(class="form-control", placeholder="Length") }}
+                            </div>
+                        </div>
+                        
+                        <!-- ORF1 Section -->
+                        <div class="border rounded p-3 mb-3 bg-light">
+                            <h6 class="mb-3"><i class="fas fa-dna me-2"></i>ORF 1 Information</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    {{ form.orf1.label(class="form-label") }}
+                                    {{ form.orf1(class="form-control", placeholder="ORF1 short name") }}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    {{ form.orf_1.label(class="form-label") }}
+                                    {{ form.orf_1(class="form-control", placeholder="ORF 1") }}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    {{ form.orf_1_length.label(class="form-label") }}
+                                    {{ form.orf_1_length(class="form-control", placeholder="Length") }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3 mb-2">
+                                    {{ form.orf_1_begin.label(class="form-label") }}
+                                    {{ form.orf_1_begin(class="form-control", placeholder="Begin") }}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    {{ form.orf_1_end.label(class="form-label") }}
+                                    {{ form.orf_1_end(class="form-control", placeholder="End") }}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    {{ form.orf_1_strand.label(class="form-label") }}
+                                    {{ form.orf_1_strand(class="form-control", placeholder="Strand") }}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    {{ form.fusion_orf_1.label(class="form-label") }}
+                                    {{ form.fusion_orf_1(class="form-control", placeholder="Fusion") }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    {{ form.orf_1_function.label(class="form-label") }}
+                                    {{ form.orf_1_function(class="form-control", placeholder="Function") }}
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    {{ form.orf_1_chemistry.label(class="form-label") }}
+                                    {{ form.orf_1_chemistry(class="form-control", placeholder="Chemistry") }}
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                {{ form.orf_1_sequence.label(class="form-label") }}
+                                {{ form.orf_1_sequence(class="form-control font-monospace", rows="3", placeholder="ORF 1 sequence") }}
+                            </div>
+                        </div>
+                        
+                        <!-- ORF2 Section -->
+                        <div class="border rounded p-3 bg-light">
+                            <h6 class="mb-3"><i class="fas fa-dna me-2"></i>ORF 2 Information</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    {{ form.orf2.label(class="form-label") }}
+                                    {{ form.orf2(class="form-control", placeholder="ORF2 short name") }}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    {{ form.orf_2.label(class="form-label") }}
+                                    {{ form.orf_2(class="form-control", placeholder="ORF 2") }}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    {{ form.orf_2_length.label(class="form-label") }}
+                                    {{ form.orf_2_length(class="form-control", placeholder="Length") }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3 mb-2">
+                                    {{ form.orf_2_begin.label(class="form-label") }}
+                                    {{ form.orf_2_begin(class="form-control", placeholder="Begin") }}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    {{ form.orf_2_end.label(class="form-label") }}
+                                    {{ form.orf_2_end(class="form-control", placeholder="End") }}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    {{ form.orf_2_strand.label(class="form-label") }}
+                                    {{ form.orf_2_strand(class="form-control", placeholder="Strand") }}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    {{ form.fusion_orf_2.label(class="form-label") }}
+                                    {{ form.fusion_orf_2(class="form-control", placeholder="Fusion") }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    {{ form.orf_2_function.label(class="form-label") }}
+                                    {{ form.orf_2_function(class="form-control", placeholder="Function") }}
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    {{ form.orf_2_chemistry.label(class="form-label") }}
+                                    {{ form.orf_2_chemistry(class="form-control", placeholder="Chemistry") }}
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                {{ form.orf_2_sequence.label(class="form-label") }}
+                                {{ form.orf_2_sequence(class="form-control font-monospace", rows="3", placeholder="ORF 2 sequence") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 参考信息 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-link me-2"></i>Reference Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.accession_number.label(class="form-label fw-bold") }}
+                                {{ form.accession_number(class="form-control", placeholder="e.g., X52008") }}
+                                {% if form.accession_number.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.accession_number.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.origin.label(class="form-label fw-bold") }}
+                                {{ form.origin(class="form-control", placeholder="Origin information") }}
+                                {% if form.origin.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.origin.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.references.label(class="form-label fw-bold") }}
+                            {{ form.references(class="form-control", rows="3", placeholder="References...") }}
+                            {% if form.references.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.references.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="comment" class="form-label fw-bold">Comment</label>
+                            {{ form.comment(class="form-control", rows="3", placeholder="Other remarks...") }}
+                            {% if form.comment.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.comment.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 侧边栏信息 -->
+            <div class="col-lg-4">
+                <div class="sticky-top" style="top: 20px;">
+                    <!-- 操作按钮 -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="fas fa-cog me-2"></i>Actions
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>{{ 'Update' if element else 'Add' }} IS Element
+                                </button>
+                                <a href="{{ url_for('admin.is_elements') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                                {% if element %}
+                                <button type="button" class="btn btn-outline-danger" 
+                                        onclick="deleteElement({{ element.id }}, '{{ element.name }}')">
+                                    <i class="fas fa-trash me-2"></i>Delete
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 状态信息 -->
+                    {% if element %}
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="fas fa-info me-2"></i>Record Information
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <label class="text-muted small">ID</label>
+                                <div>{{ element.id }}</div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="text-muted small">Status</label>
+                                <div>
+                                    {% if element.status == 'approved' %}
+                                    <span class="badge bg-success">Approved</span>
+                                    {% elif element.status == 'pending' %}
+                                    <span class="badge bg-warning">Pending</span>
+                                    {% elif element.status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="text-muted small">Submitted At</label>
+                                <div class="small">{{ element.submission_date.strftime('%Y-%m-%d %H:%M') if element.submission_date else '-' }}</div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="text-muted small">Updated At</label>
+                                <div class="small">{{ element.updated_at.strftime('%Y-%m-%d %H:%M') if element.updated_at else '-' }}</div>
+                            </div>
+                            {% if element.submitter_id %}
+                            <div class="mb-0">
+                                <label class="text-muted small">Submitter</label>
+                                <div class="small">User ID: {{ element.submitter_id }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- 删除确认模态框 -->
+{% if element %}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete IS element "<span id="deleteElementName"></span>"?</p>
+                <p class="text-danger"><strong>This action cannot be undone!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    {{ delete_form.hidden_tag() }}
+                    <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 序列长度实时统计
+    function updateSequenceLength() {
+        const sequence = $('#is_sequence').val().replace(/\s/g, '');
+        $('#sequence-length').text(sequence.length);
+        
+        // 如果长度字段为空且有序列，自动填充长度
+        if (sequence.length > 0 && !$('#is_length').val()) {
+            $('#is_length').val(sequence.length);
+        }
+    }
+    
+    $('#is_sequence').on('input', updateSequenceLength);
+    updateSequenceLength(); // 初始化
+    
+    // 表单提交验证
+    $('form').on('submit', function(e) {
+        $(this).addClass('was-validated');
+        
+        if (!this.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // 查找第一个无效字段并滚动到它
+            const firstInvalid = $(this).find(':invalid').first();
+            if (firstInvalid.length) {
+                $('html, body').animate({
+                    scrollTop: firstInvalid.offset().top - 100
+                }, 500);
+                firstInvalid.focus();
+                
+                // 显示提示
+                const fieldLabel = firstInvalid.closest('.mb-3, .col-md-6, .col-md-4, .col-md-12').find('label').text() || 'Unknown field';
+                alert('Please fill in the required field: ' + fieldLabel);
+            }
+            return false;
+        } else {
+            // 显示保存状态
+            const submitBtn = $('button[type="submit"]');
+            submitBtn.html('<i class="fas fa-spinner fa-spin me-2"></i>Saving...');
+            submitBtn.prop('disabled', true);
+        }
+    });
+    
+    // 自动保存草稿功能 (可选实现)
+    let autoSaveTimer;
+    $('input, textarea, select').on('input change', function() {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(function() {
+            // console.log('自动保存草稿...');
+        }, 30000); // 30秒后自动保存
+    });
+});
+
+{% if element %}
+function deleteElement(id, name) {
+    document.getElementById('deleteElementName').textContent = name;
+    document.getElementById('deleteForm').action = `/admin/is-element/${id}/delete`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+{% endif %}
+</script>
+{% endblock %}

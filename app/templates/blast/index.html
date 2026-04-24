@@ -1,0 +1,176 @@
+{% extends "layout/base.html" %}
+
+{% block title %}BLAST Search - proISDB{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-lg-3">
+            <!-- BLAST Search Form -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-dna text-primary me-2"></i>BLAST Search
+                    </h5>
+                    <p class="text-muted small">Search for similar sequences</p>
+                    
+                    <form method="POST" action="{{ url_for('blast.index') }}" id="blastForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- BLAST Type -->
+                        <div class="mb-3">
+                            {{ form.blast_type.label(class="form-label") }}
+                            {{ form.blast_type(class="form-select") }}
+                        </div>
+                        
+                        <!-- Query Sequence -->
+                        <div class="mb-3">
+                            {{ form.sequence.label(class="form-label") }}
+                            {{ form.sequence(class="form-control font-monospace", rows=8) }}
+                            {% if form.sequence.errors %}
+                                {% for error in form.sequence.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <!-- E-value threshold -->
+                        <div class="mb-3">
+                            {{ form.evalue.label(class="form-label") }}
+                            {{ form.evalue(class="form-select") }}
+                            <small class="text-muted">Lower = more stringent</small>
+                        </div>
+                        
+                        <!-- Max hits -->
+                        <div class="mb-3">
+                            {{ form.max_hits.label(class="form-label") }}
+                            {{ form.max_hits(class="form-select") }}
+                        </div>
+                        
+                        <!-- Word size -->
+                        <div class="mb-3" id="wordSizeDiv">
+                            {{ form.word_size.label(class="form-label") }}
+                            {{ form.word_size(class="form-select") }}
+                        </div>
+                        
+                        <!-- Submit button -->
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Help link -->
+            <div class="mt-3 text-center">
+                <a href="{{ url_for('blast.help') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-question-circle me-1"></i>BLAST Help
+                </a>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            {% if task_id %}
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5" id="blastLoading">
+                    <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5>Running BLAST search...</h5>
+                    <p class="text-muted" id="blastStatus">This may take up to 60 seconds</p>
+                    <div class="progress mt-3" style="max-width: 400px; margin: 0 auto;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div id="blastResults" style="display:none;"></div>
+            </div>
+            {% elif results %}
+                {% include 'blast/results_table.html' %}
+            {% elif request.method == 'POST' %}
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No matches found. Try adjusting your E-value threshold.
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Welcome -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="mb-4">
+                        <i class="fas fa-dna text-primary me-2"></i>Welcome to BLAST Search
+                    </h4>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>How to use:</h6>
+                        <ol class="mb-0">
+                            <li>Select BLAST type (blastn for DNA, blastp for proteins)</li>
+                            <li>Paste your sequence</li>
+                            <li>Adjust parameters if needed</li>
+                            <li>Click "Run BLAST"</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const blastType = document.getElementById('blast_type');
+    const wordSizeDiv = document.getElementById('wordSizeDiv');
+    
+    function toggleWordSize() {
+        if (blastType.value === 'blastp') {
+            wordSizeDiv.style.display = 'none';
+        } else {
+            wordSizeDiv.style.display = 'block';
+        }
+    }
+    
+    blastType.addEventListener('change', toggleWordSize);
+    toggleWordSize();
+
+    {% if task_id %}
+    var taskId = '{{ task_id }}';
+    var pollInterval = 2000;
+    var maxPolls = 60;
+    var pollCount = 0;
+
+    function pollResult() {
+        pollCount++;
+        if (pollCount > maxPolls) {
+            document.getElementById('blastStatus').textContent = 'Search is taking too long. Please try again.';
+            return;
+        }
+        fetch('{{ url_for("blast.blast_result", task_id="PLACEHOLDER") }}'.replace('PLACEHOLDER', taskId))
+            .then(function(resp) { return resp.json(); })
+            .then(function(data) {
+                if (data.state === 'PENDING' || data.state === 'STARTED') {
+                    if (data.status) {
+                        document.getElementById('blastStatus').textContent = data.status;
+                    }
+                    setTimeout(pollResult, pollInterval);
+                } else if (data.state === 'SUCCESS') {
+                    window.location.href = '{{ url_for("blast.results_page") }}' + '?task_id=' + taskId;
+                } else {
+                    document.getElementById('blastLoading').innerHTML =
+                        '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>' +
+                        (data.status || 'BLAST search failed') + '</div>';
+                }
+            })
+            .catch(function(err) {
+                document.getElementById('blastStatus').textContent = 'Connection error, retrying...';
+                setTimeout(pollResult, pollInterval * 2);
+            });
+    }
+
+    setTimeout(pollResult, pollInterval);
+    {% endif %}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="{{ session.lang or 'zh-CN' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{% block meta_description %}proISDB - Professional IS element (insertion sequence) database and popular science platform{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}IS elements, insertion sequences, transposons, genome, bioinformatics{% endblock %}">
+    <meta name="author" content="proISDB Team">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ self.meta_description() }}{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    
+    <title>{% block title %}proISDB - IS Element Database{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/main.css') }}?v=20260122c" rel="stylesheet">
+    
+    <!-- 导航栏性能优化CSS -->
+    <link href="{{ url_for('static', filename='css/navbar-optimization.css') }}" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark modern-navbar sticky-top">
+        <div class="container">
+            <!-- Brand -->
+            <a class="navbar-brand modern-brand" href="{{ url_for('main.index') }}">
+                <div class="brand-container">
+                    <i class="fas fa-dna brand-icon"></i>
+                    <span class="brand-text">proISDB</span>
+                </div>
+            </a>
+            
+            <!-- Mobile toggle button -->
+            <button class="navbar-toggler modern-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="toggler-line"></span>
+                <span class="toggler-line"></span>
+                <span class="toggler-line"></span>
+            </button>
+            
+            <!-- Navigation items -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto modern-nav">
+                    <li class="nav-item">
+                        <a class="nav-link modern-nav-link {{ 'active' if request.endpoint == 'main.index' }}" 
+                           href="{{ url_for('main.index') }}">
+                            <div class="nav-link-content">
+                                <i class="fas fa-home nav-icon"></i>
+                                <span class="nav-text">Home</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link modern-nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('search.') }}" 
+                           href="{{ url_for('search.index') }}">
+                            <div class="nav-link-content">
+                                <i class="fas fa-search nav-icon"></i>
+                                <span class="nav-text">Search</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link modern-nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('knowledge.') }}" 
+                           href="{{ url_for('knowledge.index') }}">
+                            <div class="nav-link-content">
+                                <i class="fas fa-book nav-icon"></i>
+                                <span class="nav-text">Knowledge</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link modern-nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('submission.') }}" 
+                           href="{{ url_for('submission.index') }}">
+                            <div class="nav-link-content">
+                                <i class="fas fa-upload nav-icon"></i>
+                                <span class="nav-text">Data Submission</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link modern-nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('blast.') }}" 
+                           href="{{ url_for('blast.index') }}">
+                            <div class="nav-link-content">
+                                <i class="fas fa-dna nav-icon"></i>
+                                <span class="nav-text">BLAST</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link modern-nav-link {{ 'active' if request.endpoint and request.endpoint == 'main.about' }}" 
+                           href="{{ url_for('main.about') }}">
+                            <div class="nav-link-content">
+                                <i class="fas fa-info-circle nav-icon"></i>
+                                <span class="nav-text">About Us</span>
+                            </div>
+                        </a>
+                    </li>
+
+                </ul>
+                
+                <!-- Language Switcher removed -->
+                
+                <!-- Admin menu -->
+                <ul class="navbar-nav admin-nav">
+                    {% if current_user.is_authenticated and current_user.is_admin() %}
+                        <li class="nav-item admin-menu-wrapper">
+                            <a class="nav-link modern-nav-link admin-toggle" href="#">
+                                <div class="nav-link-content">
+                                    <i class="fas fa-user-shield nav-icon admin-icon"></i>
+                                    <span class="nav-text">Admin</span>
+                                    <i class="fas fa-chevron-down ms-2" style="font-size: 0.8rem;"></i>
+                                </div>
+                            </a>
+                            <div class="admin-dropdown-menu">
+                                <div class="admin-dropdown-header">
+                                    <i class="fas fa-crown me-2"></i>Admin Functions
+                                </div>
+                                <a class="admin-dropdown-item" href="{{ url_for('admin.index') }}">
+                                    <i class="fas fa-tachometer-alt me-2"></i>
+                                    <span>Admin Panel</span>
+                                </a>
+                                <a class="admin-dropdown-item" href="{{ url_for('submission.pending_review') }}">
+                                    <i class="fas fa-tasks me-2"></i>
+                                    <span>Review Data</span>
+                                    {% set pending_count = get_pending_submissions_count() %}
+                                    {% if pending_count > 0 %}
+                                    <span class="badge bg-warning text-dark ms-auto">{{ pending_count }}</span>
+                                    {% endif %}
+                                </a>
+                                <a class="admin-dropdown-item" href="{{ url_for('knowledge.admin_index') }}">
+                                    <i class="fas fa-book me-2"></i>
+                                    <span>Content Management</span>
+                                </a>
+                                <div class="admin-dropdown-divider"></div>
+                                <div class="admin-dropdown-header">
+                                    <i class="fas fa-user me-2"></i>Account Settings
+                                </div>
+                                <a class="admin-dropdown-item" href="{{ url_for('auth.profile') }}">
+                                    <i class="fas fa-user-circle me-2"></i>
+                                    <span>Profile</span>
+                                </a>
+                                <a class="admin-dropdown-item" href="{{ url_for('auth.logout') }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </div>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-dna me-2"></i>proISDB</h5>
+                    <p class="text-muted">
+                        Professional IS element (insertion sequence) database and popular science platform, providing comprehensive data resources and tools for bioinformatics research.
+                    </p>
+                </div>
+                <div class="col-md-3">
+                    <h6>Quick Links</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('search.index') }}" class="text-light text-decoration-none">Data Search</a></li>
+                        <li><a href="{{ url_for('knowledge.index') }}" class="text-light text-decoration-none">Popular Science Knowledge</a></li>
+                        <li><a href="{{ url_for('submission.index') }}" class="text-light text-decoration-none">Data Submission</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">&copy; {{ current_year }} proISDB. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="{{ url_for('main.about') }}" class="text-light text-decoration-none me-3">About Us</a>
+                    <a href="#" class="text-light text-decoration-none me-3">Contact Us</a>
+                    <a href="#" class="text-light text-decoration-none">Terms of Use</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to top button -->
+    <button id="backToTop" class="btn btn-primary position-fixed" style="bottom: 20px; right: 20px; display: none; z-index: 1000;">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- Scripts -->
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery (for easier DOM manipulation) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- Auto-dismiss alerts -->
+    <script>
+        $(document).ready(function() {
+            // 自动关闭警告消息（5秒后）
+            $('.alert').each(function() {
+                var alert = $(this);
+                setTimeout(function() {
+                    alert.fadeOut('slow', function() {
+                        $(this).remove();
+                    });
+                }, 5000);
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

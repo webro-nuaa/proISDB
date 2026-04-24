@@ -1,0 +1,251 @@
+<!-- BLAST Search Results Table -->
+<div class="results-section mt-4">
+    <div class="results-header mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="text-success fw-bold mb-0">
+                <i class="fas fa-dna me-2"></i>BLAST Results
+                {% if search_time %}
+                <small class="text-muted fs-6">({{ search_time }}s)</small>
+                {% endif %}
+            </h4>
+            <div>
+                <span class="badge bg-success fs-6 px-3 py-2 me-2">{{ results|length }} matches</span>
+                <button class="btn btn-primary" onclick="downloadSelected()">
+                    <i class="fas fa-download me-2"></i>Download Selected
+                </button>
+            </div>
+        </div>
+        {% if query_info %}
+        <div class="alert alert-info mt-3">
+            <strong>Query:</strong> {{ query_info.query_id }} | <strong>Length:</strong> {{ query_info.query_length }} bp/aa
+        </div>
+        {% endif %}
+        <hr class="my-3">
+    </div>
+    
+    <div class="results-table">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th><input type="checkbox" id="select-all-results" onclick="toggleAll(this)"></th>
+                        <th>Name</th>
+                        <th>Score</th>
+                        <th>E-value</th>
+                        <th>Identity</th>
+                        <th>Coverage</th>
+                        <th>Family</th>
+                        <th>Host</th>
+                        <th>Length</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in results %}
+                    {% set element = item.element %}
+                    <tr class="result-row">
+                        <td>
+                            <input type="checkbox" class="select-item" value="{{ element.id }}" onclick="event.stopPropagation()">
+                        </td>
+                        <td>
+                            <a href="{{ url_for('blast.element_detail', id=element.id) }}" class="text-decoration-none fw-bold" target="_blank">
+                                {{ element.name }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">{{ "%.1f"|format(item.blast_score) }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-{% if item.evalue < 0.001 %}success{% elif item.evalue < 1 %}warning{% else %}secondary{% endif %}">
+                                {{ "%.2e"|format(item.evalue) }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress" style="width: 80px; height: 20px;">
+                                <div class="progress-bar bg-success" style="width: {{ item.identity_percent }}%">
+                                    {{ item.identity_percent }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <small>Q: {{ item.query_coverage }}%<br>T: {{ item.hit_coverage }}%</small>
+                        </td>
+                        <td>{{ element.family or 'N/A' }}</td>
+                        <td>{{ element.host or 'N/A' }}</td>
+                        <td>{{ element.is_length or element.length or 'N/A' }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#alignModal{{ loop.index }}">
+                                <i class="bi bi-eye"></i> Alignment
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Alignment Detail Modals -->
+{% for item in results %}
+<div class="modal fade" id="alignModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">BLAST Alignment: {{ item.element.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Score:</strong> {{ "%.1f"|format(item.blast_score) }}</p>
+                        <p><strong>E-value:</strong> {{ "%.2e"|format(item.evalue) }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Identity:</strong> {{ item.identity }}/{{ item.align_len }} ({{ item.identity_percent }}%)</p>
+                        <p><strong>Coverage:</strong> Query {{ item.query_coverage }}% | Target {{ item.hit_coverage }}%</p>
+                    </div>
+                </div>
+                
+                <h6>Alignment:</h6>
+                <div class="bg-light p-3 rounded">
+                    <pre class="font-monospace small mb-0" style="white-space: pre-wrap; word-break: break-all;">Query  {{ '%4d'|format(item.query_from) }}  {{ item.query_seq }}  {{ item.query_to }}
+       {{ ' ' * 7 }}{{ item.midline }}
+Sbjct  {{ '%4d'|format(item.hit_from) }}  {{ item.hit_seq }}  {{ item.hit_to }}</pre>
+                </div>
+                
+                <div class="mt-3">
+                    <a href="{{ url_for('blast.element_detail', id=item.element.id) }}" class="btn btn-primary" target="_blank">
+                        <i class="fas fa-external-link-alt me-2"></i>View Full IS Element Details
+                    </a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+</div>
+
+<!-- Download Request Modal -->
+<div class="modal fade" id="downloadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('search.apply_download') }}" class="needs-validation" novalidate id="downloadForm">
+                {{ download_form.hidden_tag() if download_form }}
+                <input type="hidden" name="selected_ids" id="selectedIds">
+                
+                <div class="modal-header">
+                    <h5 class="modal-title">Download Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info mb-3">
+                        You have selected <strong id="selectedCount">0</strong> IS elements. 
+                        Please fill in the form below to submit your download request.
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">First Name <span class="text-danger">*</span></label>
+                            <input type="text" name="first_name" class="form-control" required maxlength="50" placeholder="Enter first name">
+                            <div class="invalid-feedback">Please enter first name</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" name="last_name" class="form-control" required maxlength="50" placeholder="Enter last name">
+                            <div class="invalid-feedback">Please enter last name</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Institution <span class="text-danger">*</span></label>
+                            <input type="text" name="institution" class="form-control" required maxlength="200" placeholder="Enter institution">
+                            <div class="invalid-feedback">Please enter institution</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Department</label>
+                            <input type="text" name="department" class="form-control" maxlength="200" placeholder="Enter department (optional)">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Country <span class="text-danger">*</span></label>
+                            <input type="text" name="country" class="form-control" required maxlength="100" placeholder="Enter country">
+                            <div class="invalid-feedback">Please enter country</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control" required placeholder="Enter email address">
+                            <div class="invalid-feedback">Please enter valid email</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Assign to Admin <span class="text-danger">*</span></label>
+                            <select name="assigned_admin" class="form-select" required>
+                                <option value="">-- Select Admin --</option>
+                                {% if admins %}
+                                    {% for admin in admins %}
+                                    <option value="{{ admin.id }}">{{ admin.username }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                            <div class="invalid-feedback">Please select an admin</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Export Format <span class="text-danger">*</span></label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="format" id="formatCSV" value="csv" checked required>
+                                <label class="form-check-label" for="formatCSV">
+                                    <i class="fas fa-file-csv me-1"></i> CSV (Spreadsheet format)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="format" id="formatFASTA" value="fasta" required>
+                                <label class="form-check-label" for="formatFASTA">
+                                    <i class="fas fa-dna me-1"></i> FASTA (Sequence format)
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Reason for Request <span class="text-danger">*</span></label>
+                            <textarea name="reason" class="form-control" rows="4" required minlength="10" maxlength="2000" placeholder="Please explain why you need this data (10-2000 characters)"></textarea>
+                            <div class="form-text text-muted small">Minimum 10 characters, maximum 2000 characters</div>
+                            <div class="invalid-feedback">Reason must be between 10-2000 characters</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleAll(checkbox) {
+    const checkboxes = document.querySelectorAll('.select-item');
+    checkboxes.forEach(cb => cb.checked = checkbox.checked);
+}
+
+function downloadSelected() {
+    const selected = Array.from(document.querySelectorAll('.select-item:checked')).map(cb => cb.value);
+    if (selected.length === 0) {
+        alert('Please select at least one IS element');
+        return;
+    }
+    
+    // Show download modal
+    const modalEl = document.getElementById('downloadModal');
+    const countEl = document.getElementById('selectedCount');
+    const idsEl = document.getElementById('selectedIds');
+    
+    if (countEl && idsEl && modalEl) {
+        countEl.textContent = selected.length;
+        idsEl.value = selected.join(',');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    } else {
+        console.error('Download modal elements not found');
+    }
+}
+</script>

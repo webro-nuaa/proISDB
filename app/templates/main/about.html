@@ -1,0 +1,142 @@
+{% extends "layout/base.html" %}
+
+{% block title %}About Us - proISDB{% endblock %}
+
+{% block extra_css %}
+<style>
+.about-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    padding: 40px;
+    text-align: center;
+}
+
+.about-header h1 {
+    margin-bottom: 20px;
+}
+
+.about-header .lead {
+    margin-bottom: 25px;
+    opacity: 0.9;
+}
+
+.about-icon {
+    opacity: 0.8;
+    margin-top: 20px;
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+.text-primary {
+    color: #667eea !important;
+}
+
+.list-unstyled li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.list-unstyled li:last-child {
+    border-bottom: none;
+}
+
+.list-unstyled i {
+    width: 20px;
+    text-align: center;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- About Header -->
+    <div class="about-header">
+        <h1>
+            <i class="fas fa-info-circle me-3"></i>About proISDB
+        </h1>
+        <p class="lead">Professional IS element database and popular science platform</p>
+        <div class="about-icon">
+            <i class="fas fa-database fa-4x"></i>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="text-primary mb-4">Project Overview</h3>
+                    <p class="lead">proISDB (Insertion Sequences in Prokaryotes) is a comprehensive database dedicated to prokaryotic insertion sequences, providing IS element data resources, BLAST analysis, and knowledge services for researchers, students and enthusiasts.</p>
+                    
+                    <h3 class="text-primary mb-3 mt-5">Key Features</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-search text-primary me-2"></i>
+                                    <strong>Data Search</strong> - Multi-criteria search of IS element data
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-book text-success me-2"></i>
+                                    <strong>Popular Science</strong> - Professional IS element knowledge
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-upload text-info me-2"></i>
+                                    <strong>Data Submission</strong> - User submission and review
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-chart-bar text-warning me-2"></i>
+                                    <strong>Statistics</strong> - Rich statistics and visualization
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-primary mb-3 mt-5">Technical Highlights</h3>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-mobile-alt fa-2x text-success mb-2"></i>
+                                <h6>Responsive Design</h6>
+                                <p class="text-muted">Compatible with desktop and mobile</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-database fa-2x text-info mb-2"></i>
+                                <h6>Powerful Database</h6>
+                                <p class="text-muted">High-performance MySQL storage</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-shield-alt fa-2x text-warning mb-2"></i>
+                                <h6>Secure and Reliable</h6>
+                                <p class="text-muted">Complete authentication and permissions</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-primary mb-3 mt-5">Contact Us</h3>
+                    <p>If you encounter any issues or have suggestions, please contact us:</p>
+                    <p>Email: contact@insertq.com</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

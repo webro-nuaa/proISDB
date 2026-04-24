@@ -1,0 +1,738 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}{{ title }} - proISDB{% endblock %}
+
+{% block head %}
+<!-- Force reload: v20260122-1725 -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Title -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-edit me-2"></i>{{ title }}
+                </h2>
+                <div>
+                    {% if article %}
+                    <a href="{{ url_for('knowledge.admin_view_article', id=article.id) }}" class="btn btn-outline-info me-2">
+                        <i class="fas fa-eye me-2"></i>View Article
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('knowledge.admin_articles') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" class="needs-validation" novalidate>
+        {{ form.hidden_tag() }}
+        
+        <div class="row">
+            <!-- Main Editor Area -->
+            <div class="col-lg-8">
+                <!-- Basic Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Basic Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ form.title.label(class="form-label fw-bold") }} <span class="text-danger">*</span>
+                            {{ form.title(class="form-control form-control-lg", placeholder="Enter article title...") }}
+                            {% if form.title.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.title.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.slug.label(class="form-label fw-bold") }}
+                            <div class="input-group">
+                                <span class="input-group-text">{{ request.url_root }}knowledge/article/</span>
+                                {{ form.slug(class="form-control", placeholder="Leave empty to auto-generate from title") }}
+                            </div>
+                            {% if form.slug.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.slug.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <span class="form-text">Leave empty to auto-generate a URL-friendly slug from the article title.</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.summary.label(class="form-label fw-bold") }}
+                            {{ form.summary(class="form-control", rows="3", placeholder="Article summary for search results and list...") }}
+                            {% if form.summary.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.summary.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Article Content -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-edit me-2"></i>Article Content
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form.content.label(class="form-label fw-bold") }} <span class="text-danger">*</span>
+                        <div class="markdown-editor">
+                            <!-- Toolbar -->
+                            <div class="editor-toolbar bg-light border rounded-top p-2 mb-0">
+                                <div class="btn-group btn-group-sm me-2" role="group">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="insertMarkdown('**', '**')" title="Bold">
+                                        <i class="fas fa-bold"></i> Bold
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="insertMarkdown('*', '*')" title="Italic">
+                                        <i class="fas fa-italic"></i> Italic
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="insertMarkdown('`', '`')" title="Code">
+                                        <i class="fas fa-code"></i> Code
+                                    </button>
+                                </div>
+                                <div class="btn-group btn-group-sm me-2" role="group">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="insertMarkdown('# ', '')" title="Heading 1">
+                                        <i class="fas fa-heading"></i> H1
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="insertMarkdown('## ', '')" title="Heading 2">
+                                        <i class="fas fa-heading"></i> H2
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="insertMarkdown('### ', '')" title="Heading 3">
+                                        <i class="fas fa-heading"></i> H3
+                                    </button>
+                                </div>
+                                <div class="btn-group btn-group-sm me-2" role="group">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="insertMarkdown('- ', '')" title="List">
+                                        <i class="fas fa-list-ul"></i> List
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="insertMarkdown('1. ', '')" title="Ordered List">
+                                        <i class="fas fa-list-ol"></i> Ordered
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="insertMarkdown('> ', '')" title="Quote">
+                                        <i class="fas fa-quote-right"></i> Quote
+                                    </button>
+                                </div>
+                                <div class="btn-group btn-group-sm me-2" role="group">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="insertMarkdown('[', '](url)')" title="Link">
+                                        <i class="fas fa-link"></i> Link
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="insertMarkdown('![', '](image-url)')" title="Image URL">
+                                        <i class="fas fa-image"></i> URL
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success" onclick="document.getElementById('imageUpload').click()" title="Insert Local Image">
+                                        <i class="fas fa-file-image"></i> Insert
+                                    </button>
+                                    <input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="uploadImage(this)">
+                                </div>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-primary" onclick="togglePreview()" id="previewBtn">
+                                        <i class="fas fa-eye"></i> Preview
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Editor -->
+                            <div class="editor-container position-relative">
+                                {{ form.content(class="form-control markdown-textarea border-top-0 rounded-top-0", rows="20", placeholder="Markdown supported: **bold** *italic* `code` # Heading [link](url) ![image](url)", style="font-family: 'Monaco', 'Consolas', 'Courier New', monospace;") }}
+                                <div class="markdown-preview d-none border border-top-0 rounded-bottom p-3 bg-white" id="markdownPreview" style="min-height: 500px; max-height: 500px; overflow-y: auto;"></div>
+                            </div>
+                        </div>
+                        {% if form.content.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.content.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <span class="form-text">Full Markdown supported, including code highlight, tables, quotes, etc.</span>
+                        <a href="https://markdown.com.cn/basic-syntax/" target="_blank" class="text-decoration-none ms-2">
+                            <i class="fas fa-external-link-alt"></i> View Markdown Guide
+                        </a>
+                    </div>
+                </div>
+
+                <!-- SEO Settings -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-search me-2"></i>SEO Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ form.meta_keywords.label(class="form-label") }}
+                            {{ form.meta_keywords(class="form-control", placeholder="keyword1, keyword2, keyword3") }}
+                            {% if form.meta_keywords.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.meta_keywords.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.meta_description.label(class="form-label") }}
+                            {{ form.meta_description(class="form-control", placeholder="SEO description shown in search results") }}
+                            {% if form.meta_description.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.meta_description.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Settings -->
+            <div class="col-lg-4">
+                <!-- Publish Settings -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cog me-2"></i>Publish Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ form.status.label(class="form-label fw-bold") }}
+                            {{ form.status(class="form-select") }}
+                            {% if form.status.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.status.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_featured(class="form-check-input") }}
+                                {{ form.is_featured.label(class="form-check-label") }}
+                            </div>
+                            <small class="text-muted">Featured articles will be shown on the homepage</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tags -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tags me-2"></i>Tags
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ form.tags.label(class="form-label fw-bold") }}
+                            {{ form.tags(class="form-control", placeholder="tag1, tag2, tag3") }}
+                            {% if form.tags.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.tags.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="text-muted">Separate multiple tags by comma</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Featured Image -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-image me-2"></i>Featured Image
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ form.featured_image.label(class="form-label") }}
+                            {{ form.featured_image(class="form-control", placeholder="https://example.com/image.jpg") }}
+                            {% if form.featured_image.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.featured_image.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="text-muted">Enter the full URL of the image</small>
+                        </div>
+                        
+                        <div id="image-preview" class="mt-2"></div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>{{ 'Update Article' if article else 'Save Article' }}
+                            </button>
+                            
+                            <!-- Quick Publish -->
+                            <button type="button" class="btn btn-success btn-lg" onclick="publishArticle()">
+                                <i class="fas fa-paper-plane me-2"></i>{{ 'Publish Now' if not article or article.status != 'published' else 'Republish' }}
+                            </button>
+                            
+                            {% if article %}
+                            <a href="{{ url_for('knowledge.admin_view_article', id=article.id) }}" 
+                               class="btn btn-info">
+                                <i class="fas fa-eye me-2"></i>Preview
+                            </a>
+                            {% endif %}
+                            
+                            <a href="{{ url_for('knowledge.admin_articles') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto-generate slug
+    $('#title').on('input', function() {
+        const title = $(this).val();
+        if (title && !$('#slug').val()) {
+            const slug = title.toLowerCase()
+                              .replace(/[^\w\s-]/g, '')
+                              .replace(/\s+/g, '-')
+                              .substring(0, 50);
+            $('#slug').val(slug);
+        }
+    });
+    
+    // Featured image preview
+    $('#featured_image').on('input', function() {
+        const url = $(this).val();
+        const preview = $('#image-preview');
+        
+        if (url) {
+            preview.html(`
+                <img src="${url}" class="img-fluid rounded" style="max-height: 150px;" 
+                     referrerpolicy="no-referrer"
+                     onerror="this.style.display='none'; $(this).next().show();">
+                <div class="text-danger mt-2" style="display:none;">
+                    <small>Image failed to load. This might be due to hotlink protection. Please use images from your own server or a public image hosting service.</small>
+                </div>
+            `);
+        } else {
+            preview.empty();
+        }
+    });
+    
+    // Form validation
+    $('form').on('submit', function(e) {
+        if (!this.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        } else {
+            // Show saving state
+            const submitBtn = $('button[type="submit"]');
+            submitBtn.html('<i class="fas fa-spinner fa-spin me-2"></i>Saving...');
+            submitBtn.prop('disabled', true);
+        }
+        
+        $(this).addClass('was-validated');
+    });
+    
+    // Content word count
+    $('#content').on('input', function() {
+        const content = $(this).val();
+        const length = content.length;
+        const maxLength = 50000;
+        
+        // Add counter hint
+        let counter = $(this).siblings('.char-counter');
+        if (counter.length === 0) {
+            counter = $('<small class="text-muted char-counter"></small>');
+            $(this).after(counter);
+        }
+        
+        counter.text(`${length}/${maxLength} chars`);
+        
+        if (length > maxLength * 0.9) {
+            counter.removeClass('text-muted').addClass('text-warning');
+        } else {
+            counter.removeClass('text-warning').addClass('text-muted');
+        }
+    });
+    
+    // Init image preview
+    $('#featured_image').trigger('input');
+});
+
+// Quick publish
+function publishArticle() {
+    // Set status to published
+    $('#status').val('published');
+    
+    // Submit form
+    const form = $('form');
+    const submitBtn = $('button[type="submit"]');
+    
+    // Show publishing state
+    $('button[onclick="publishArticle()"]').html('<i class="fas fa-spinner fa-spin me-2"></i>Publishing...');
+    $('button[onclick="publishArticle()"]').prop('disabled', true);
+    
+    // Validate form
+    if (form[0].checkValidity()) {
+        submitBtn.click();
+    } else {
+        // Restore button state
+        $('button[onclick="publishArticle()"]').html('<i class="fas fa-paper-plane me-2"></i>Publish Now');
+        $('button[onclick="publishArticle()"]').prop('disabled', false);
+        
+        alert('Please fill required fields before publishing');
+        form.addClass('was-validated');
+    }
+}
+
+// Markdown editor helpers
+let isPreviewMode = false;
+
+// Upload image function
+function uploadImage(input) {
+    if (!input.files || !input.files[0]) {
+        return;
+    }
+    
+    const file = input.files[0];
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should not exceed 5MB');
+        return;
+    }
+    
+    // Create FormData
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    // Add article_id if editing existing article
+    {% if article %}
+    formData.append('article_id', '{{ article.id }}');
+    {% endif %}
+    
+    // Add CSRF token
+    const csrfToken = $('input[name="csrf_token"]').val();
+    if (csrfToken) {
+        formData.append('csrf_token', csrfToken);
+    }
+    
+    // Show uploading message
+    const contentTextarea = $('.markdown-textarea');
+    const originalValue = contentTextarea.val();
+    const uploadingText = '\n\n![Uploading...]()\n\n';
+    contentTextarea.val(originalValue + uploadingText);
+    
+    // Upload image
+    $.ajax({
+        url: '{{ url_for("knowledge.upload_image") }}',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRFToken': csrfToken
+        },
+        success: function(response) {
+            if (response.success) {
+                // Replace uploading text with actual image
+                const imageMarkdown = `![${file.name}](${response.url})`;
+                const newValue = contentTextarea.val().replace(uploadingText, '\n\n' + imageMarkdown + '\n\n');
+                contentTextarea.val(newValue);
+                
+                // Update preview if in preview mode
+                if (isPreviewMode) {
+                    updatePreview();
+                }
+                
+                // Reset file input
+                input.value = '';
+            } else {
+                alert('Upload failed: ' + (response.error || 'Unknown error'));
+                // Remove uploading text
+                contentTextarea.val(originalValue);
+            }
+        },
+        error: function(xhr) {
+            let errorMsg = 'Network error';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMsg = xhr.responseJSON.error;
+            } else if (xhr.statusText) {
+                errorMsg = xhr.statusText;
+            }
+            alert('Upload failed: ' + errorMsg);
+            console.error('Upload error:', xhr);
+            // Remove uploading text
+            contentTextarea.val(originalValue);
+        }
+    });
+}
+
+function insertMarkdown(prefix, suffix) {
+    const textarea = $('.markdown-textarea')[0];
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    
+    let newText;
+    if (suffix) {
+        newText = prefix + selectedText + suffix;
+    } else {
+        // For headings, insert at the beginning of the line
+        const lineStart = textarea.value.lastIndexOf('\n', start - 1) + 1;
+        const beforeLine = textarea.value.substring(0, lineStart);
+        const afterLine = textarea.value.substring(lineStart);
+        newText = beforeLine + prefix + afterLine;
+        textarea.value = newText;
+        textarea.focus();
+        const newPos = lineStart + prefix.length;
+        textarea.setSelectionRange(newPos, newPos);
+        return;
+    }
+    
+    const newValue = textarea.value.substring(0, start) + newText + textarea.value.substring(end);
+    textarea.value = newValue;
+    
+    // Set caret position
+    const newPos = start + prefix.length + selectedText.length + suffix.length;
+    textarea.focus();
+    textarea.setSelectionRange(newPos, newPos);
+    
+    // If in preview mode, update preview
+    if (isPreviewMode) {
+        updatePreview();
+    }
+}
+
+function togglePreview() {
+    const textarea = $('.markdown-textarea');
+    const preview = $('#markdownPreview');
+    const btn = $('#previewBtn');
+    
+    if (isPreviewMode) {
+        // Toggle to edit
+        textarea.removeClass('d-none');
+        preview.addClass('d-none');
+        btn.html('<i class="fas fa-eye"></i> Preview');
+        isPreviewMode = false;
+    } else {
+        // Toggle to preview
+        textarea.addClass('d-none');
+        preview.removeClass('d-none');
+        btn.html('<i class="fas fa-edit"></i> Edit');
+        updatePreview();
+        isPreviewMode = true;
+    }
+}
+
+function updatePreview() {
+    const content = $('.markdown-textarea').val();
+    const preview = $('#markdownPreview');
+    
+    if (!content) {
+        preview.html('<p class="text-muted">Preview area. Rendered result will be shown after you type Markdown content.</p>');
+        return;
+    }
+    
+    // Front-end markdown conversion
+    const simpleHtml = simpleMarkdownToHtml(content);
+    preview.html(simpleHtml);
+    preview.addClass('article-content');
+}
+
+function simpleMarkdownToHtml(text) {
+    if (!text) return '';
+    
+    let html = text;
+    
+    // Step 1: Extract and protect images and links first
+    const protected = [];
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, url) {
+        const index = protected.length;
+        protected.push(`<img src="${url}" alt="${alt}" class="img-fluid rounded shadow-sm my-2">`);
+        return `##PROTECTED${index}##`;
+    });
+    
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(match, text, url) {
+        const index = protected.length;
+        protected.push(`<a href="${url}" target="_blank" class="text-decoration-none">${text} <i class="fas fa-external-link-alt small"></i></a>`);
+        return `##PROTECTED${index}##`;
+    });
+    
+    // Step 2: Process other markdown
+    // Code blocks
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function(match, lang, code) {
+        return `<pre class="bg-light p-3 rounded"><code class="language-${lang}">${code.trim()}</code></pre>`;
+    });
+    
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code class="bg-light px-1 rounded">$1</code>');
+    
+    // Protect HTML tags from italic/bold processing
+    const protectedTags = [];
+    html = html.replace(/<[^>]+>/g, function(match) {
+        const index = protectedTags.length;
+        protectedTags.push(match);
+        return `___TAG_${index}___`;
+    });
+    
+    // Headings (handle from highest to lowest level)
+    html = html.replace(/^#### (.*$)/gim, '<h4 class="mt-4 mb-2">$1</h4>');
+    html = html.replace(/^### (.*$)/gim, '<h3 class="mt-4 mb-2">$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2 class="mt-4 mb-2">$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1 class="mt-4 mb-3">$1</h1>');
+    
+    // Horizontal rule
+    html = html.replace(/^---$/gim, '<hr class="my-4">');
+    
+    // Quote
+    html = html.replace(/^> (.*$)/gim, '<blockquote class="blockquote border-start border-primary border-3 ps-3 text-muted">$1</blockquote>');
+    
+    // Unordered list
+    html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
+    html = html.replace(/^- (.*$)/gim, '<li>$1</li>');
+    
+    // Ordered list
+    html = html.replace(/^\d+\. (.*$)/gim, '<li>$1</li>');
+    
+    // Wrap list items
+    html = html.replace(/(<li>.*<\/li>)/s, '<ul class="mb-3">$1</ul>');
+    html = html.replace(/(<li>.*<\/li>)/s, '<ol class="mb-3">$1</ol>');
+    
+    // Bold
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+    
+    // Italic - use negative lookahead/lookbehind to avoid matching inside HTML tags
+    html = html.replace(/(?<!\*)\*(?!\*)([^*<]+)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+    html = html.replace(/(?<!_)_(?!_)([^_<]+)(?<!_)_(?!_)/g, '<em>$1</em>');
+    
+    // Strikethrough
+    html = html.replace(/~~(.*?)~~/g, '<del>$1</del>');
+    
+    // Table (basic support)
+    const tableRegex = /\|(.+)\|\n\|[-\s|]+\|\n((?:\|.+\|\n?)+)/g;
+    html = html.replace(tableRegex, function(match, header, rows) {
+        const headerCells = header.split('|').map(cell => `<th>${cell.trim()}</th>`).join('');
+        const bodyRows = rows.trim().split('\n').map(row => {
+            const cells = row.split('|').slice(1, -1).map(cell => `<td>${cell.trim()}</td>`).join('');
+            return `<tr>${cells}</tr>`;
+        }).join('');
+        
+        return `<div class="table-responsive my-3">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark"><tr>${headerCells}</tr></thead>
+                        <tbody>${bodyRows}</tbody>
+                    </table>
+                </div>`;
+    });
+    
+    // Paragraphs grouping
+    const lines = html.split('\n');
+    const paragraphs = [];
+    let currentParagraph = '';
+    
+    for (let line of lines) {
+        line = line.trim();
+        if (line === '') {
+            if (currentParagraph) {
+                // Check if it's an HTML tag
+                if (currentParagraph.match(/^<(h[1-6]|pre|blockquote|ul|ol|table|div|hr|img)/)) {
+                    paragraphs.push(currentParagraph);
+                } else {
+                    paragraphs.push(`<p class="mb-3">${currentParagraph}</p>`);
+                }
+                currentParagraph = '';
+            }
+        } else {
+            // If it's an HTML tag, add directly
+            if (line.match(/^<(h[1-6]|pre|blockquote|ul|ol|table|div|hr|img)/)) {
+                if (currentParagraph) {
+                    paragraphs.push(`<p class="mb-3">${currentParagraph}</p>`);
+                    currentParagraph = '';
+                }
+                paragraphs.push(line);
+            } else {
+                currentParagraph += (currentParagraph ? ' ' : '') + line;
+            }
+        }
+    }
+    
+    if (currentParagraph) {
+        if (currentParagraph.match(/^<(h[1-6]|pre|blockquote|ul|ol|table|div|hr|img)/)) {
+            paragraphs.push(currentParagraph);
+        } else {
+            paragraphs.push(`<p class="mb-3">${currentParagraph}</p>`);
+        }
+    }
+    
+    html = paragraphs.join('\n');
+    
+    // Step 3: Restore everything
+    // First restore HTML tags
+    protectedTags.forEach((tag, index) => {
+        html = html.replace(new RegExp(`___TAG_${index}___`, 'g'), tag);
+    });
+    
+    // Then restore images and links
+    protected.forEach((content, index) => {
+        html = html.replace(`##PROTECTED${index}##`, content);
+    });
+    
+    return html;
+}
+
+// Live preview (optional)
+$(document).ready(function() {
+    // Can add real-time preview functionality
+    $('.markdown-textarea').on('input', function() {
+        if (isPreviewMode) {
+            // Debounced preview update
+            clearTimeout(window.previewTimeout);
+            window.previewTimeout = setTimeout(updatePreview, 500);
+        }
+    });
+});
+</script>
+{% endblock %}

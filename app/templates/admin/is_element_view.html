@@ -1,0 +1,459 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}{{ element.name }} - IS Element Detail - proISDB{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>
+                        <i class="fas fa-eye me-2"></i>IS Element Detail
+                    </h2>
+                </div>
+                <div>
+                    <a href="{{ url_for('admin.edit_is_element', id=element.id) }}" class="btn btn-primary me-2">
+                        <i class="fas fa-edit me-1"></i>Edit
+                    </a>
+                    <a href="{{ url_for('admin.is_elements') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- 基本信息 -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Basic Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Name</label>
+                            <div class="fw-bold">{{ element.name or '-' }}</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">IS Family</label>
+                            <div class="fw-bold">{{ element.family or '-' }}</div>
+                        </div>
+                        {% if element.group %}
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">IS Group</label>
+                            <div>{{ element.group }}</div>
+                        </div>
+                        {% endif %}
+                        {% if element.iso %}
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">ISO</label>
+                            <div>{{ element.iso }}</div>
+                        </div>
+                        {% endif %}
+                        {% if element.synomyns %}
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Synonyms</label>
+                            <div>{{ element.synomyns }}</div>
+                        </div>
+                        {% endif %}
+                        {% if element.isoform %}
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Isoform</label>
+                            <div>{{ element.isoform }}</div>
+                        </div>
+                        {% endif %}
+                        {% if element.mge_type %}
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">MGE Type</label>
+                            <div>{{ element.mge_type }}</div>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Host</label>
+                            <div>{{ element.host or '-' }}</div>
+                        </div>
+                        {% if element.accession_number %}
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Accession Number</label>
+                            <div>
+                                <a href="https://www.ncbi.nlm.nih.gov/nuccore/{{ element.accession_number }}" 
+                                   target="_blank" class="text-decoration-none">
+                                    {{ element.accession_number }}
+                                    <i class="fas fa-external-link-alt ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if element.origin %}
+                        <div class="col-12 mb-3">
+                            <label class="text-muted small">Origin</label>
+                            <div>{{ element.origin }}</div>
+                        </div>
+                        {% endif %}
+                        {% if element.transposition %}
+                        <div class="col-12 mb-3">
+                            <label class="text-muted small">Transposition</label>
+                            <div>{{ element.transposition }}</div>
+                        </div>
+                        {% endif %}
+                        {% if element.related_element_s %}
+                        <div class="col-12 mb-3">
+                            <label class="text-muted small">Related Elements</label>
+                            <div>{{ element.related_element_s }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 结构特征 -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-microscope me-2"></i>Structural Features
+                    </h5>
+                </div>
+                <div class="card-body">
+                     <div class="row">
+                        {% if element.length %}
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Total Length</label>
+                            <div>{{ element.length }} bp</div>
+                        </div>
+                        {% endif %}
+                        {% if element.is_length %}
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">IS Length</label>
+                            <div>{{ element.is_length }} bp</div>
+                        </div>
+                        {% endif %}
+                        {% if element.tam %}
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">TAM</label>
+                            <div>{{ element.tam }}</div>
+                        </div>
+                        {% endif %}
+                        {% if element.le_cleavage_site %}
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">LE Cleavage Site</label>
+                            <div>{{ element.le_cleavage_site }}</div>
+                        </div>
+                        {% endif %}
+                        {% if element.re_cleavage_site %}
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">RE Cleavage Site</label>
+                            <div>{{ element.re_cleavage_site }}</div>
+                        </div>
+                        {% endif %}
+                     </div>
+                </div>
+            </div>
+
+            <!-- ORF信息 -->
+            {% if element.orf_number or element.orf1 or element.orf2 %}
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-code me-2"></i>ORF Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if element.orf_number %}
+                    <div class="mb-3">
+                        <strong>Number of ORFs:</strong> {{ element.orf_number }}
+                    </div>
+                    {% endif %}
+                    
+                    <ul class="nav nav-tabs mb-3" id="orfTabs" role="tablist">
+                        {% if element.orf1 or element.orf_1_length %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="orf1-tab" data-bs-toggle="tab" data-bs-target="#orf1" type="button" role="tab">ORF 1</button>
+                        </li>
+                        {% endif %}
+                        {% if element.orf2 or element.orf_2_length %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {% if not (element.orf1 or element.orf_1_length) %}active{% endif %}" id="orf2-tab" data-bs-toggle="tab" data-bs-target="#orf2" type="button" role="tab">ORF 2</button>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    
+                    <div class="tab-content" id="orfTabsContent">
+                        <!-- ORF 1 Details -->
+                         {% if element.orf1 or element.orf_1_length %}
+                        <div class="tab-pane fade show active" id="orf1" role="tabpanel">
+                             <div class="row">
+                                {% if element.orf1 %}
+                                <div class="col-md-6 mb-2"><strong>Name:</strong> {{ element.orf1 }}</div>
+                                {% endif %}
+                                {% if element.orf_1_function %}
+                                <div class="col-md-6 mb-2"><strong>Function:</strong> {{ element.orf_1_function }}</div>
+                                {% endif %}
+                                {% if element.orf_1_length %}
+                                <div class="col-md-6 mb-2"><strong>Length:</strong> {{ element.orf_1_length }} aa</div>
+                                {% endif %}
+                                {% if element.orf_1_begin %}
+                                <div class="col-md-6 mb-2"><strong>Begin:</strong> {{ element.orf_1_begin }}</div>
+                                {% endif %}
+                                {% if element.orf_1_end %}
+                                <div class="col-md-6 mb-2"><strong>End:</strong> {{ element.orf_1_end }}</div>
+                                {% endif %}
+                                {% if element.orf_1_strand %}
+                                <div class="col-md-6 mb-2"><strong>Strand:</strong> {{ element.orf_1_strand }}</div>
+                                {% endif %}
+                                {% if element.fusion_orf_1 %}
+                                <div class="col-md-6 mb-2"><strong>Fusion:</strong> {{ element.fusion_orf_1 }}</div>
+                                {% endif %}
+                                {% if element.orf_1_chemistry %}
+                                <div class="col-md-6 mb-2"><strong>Chemistry:</strong> {{ element.orf_1_chemistry }}</div>
+                                {% endif %}
+                             </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- ORF 2 Details -->
+                        {% if element.orf2 or element.orf_2_length %}
+                        <div class="tab-pane fade {% if not (element.orf1 or element.orf_1_length) %}show active{% endif %}" id="orf2" role="tabpanel">
+                             <div class="row">
+                                {% if element.orf2 %}
+                                <div class="col-md-6 mb-2"><strong>Name:</strong> {{ element.orf2 }}</div>
+                                {% endif %}
+                                {% if element.orf_2_function %}
+                                <div class="col-md-6 mb-2"><strong>Function:</strong> {{ element.orf_2_function }}</div>
+                                {% endif %}
+                                {% if element.orf_2_length %}
+                                <div class="col-md-6 mb-2"><strong>Length:</strong> {{ element.orf_2_length }} aa</div>
+                                {% endif %}
+                                {% if element.orf_2_begin %}
+                                <div class="col-md-6 mb-2"><strong>Begin:</strong> {{ element.orf_2_begin }}</div>
+                                {% endif %}
+                                {% if element.orf_2_end %}
+                                <div class="col-md-6 mb-2"><strong>End:</strong> {{ element.orf_2_end }}</div>
+                                {% endif %}
+                                {% if element.orf_2_strand %}
+                                <div class="col-md-6 mb-2"><strong>Strand:</strong> {{ element.orf_2_strand }}</div>
+                                {% endif %}
+                                {% if element.fusion_orf_2 %}
+                                <div class="col-md-6 mb-2"><strong>Fusion:</strong> {{ element.fusion_orf_2 }}</div>
+                                {% endif %}
+                                {% if element.orf_2_chemistry %}
+                                <div class="col-md-6 mb-2"><strong>Chemistry:</strong> {{ element.orf_2_chemistry }}</div>
+                                {% endif %}
+                             </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 序列信息 -->
+            {% if element.is_sequence or element.orf_1_sequence or element.orf_2_sequence %}
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-dna me-2"></i>Sequence Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if element.is_sequence %}
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6><i class="fas fa-barcode me-2"></i>IS Sequence</h6>
+                            <button class="btn btn-sm btn-outline-primary" onclick="copySequence('is_seq')">
+                                <i class="fas fa-copy me-1"></i>Copy
+                            </button>
+                        </div>
+                        <div class="sequence-display bg-light p-3 rounded" id="is_seq" style="font-family: monospace; word-break: break-all; max-height: 300px; overflow-y: auto; font-size: 0.85rem;">{{ element.is_sequence }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if element.orf_1_sequence %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6><i class="fas fa-font me-2"></i>ORF 1 Sequence</h6>
+                            <button class="btn btn-sm btn-outline-primary" onclick="copySequence('orf1_seq')">
+                                <i class="fas fa-copy me-1"></i>Copy
+                            </button>
+                        </div>
+                        <div class="sequence-display bg-light p-3 rounded" id="orf1_seq" style="font-family: monospace; word-break: break-all; max-height: 300px; overflow-y: auto; font-size: 0.85rem;">{{ element.orf_1_sequence }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if element.orf_2_sequence %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6><i class="fas fa-font me-2"></i>ORF 2 Sequence</h6>
+                            <button class="btn btn-sm btn-outline-primary" onclick="copySequence('orf2_seq')">
+                                <i class="fas fa-copy me-1"></i>Copy
+                            </button>
+                        </div>
+                        <div class="sequence-display bg-light p-3 rounded" id="orf2_seq" style="font-family: monospace; word-break: break-all; max-height: 300px; overflow-y: auto; font-size: 0.85rem;">{{ element.orf_2_sequence }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 备注和参考文献 -->
+            {% if element.comment or element.references %}
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sticky-note me-2"></i>Additional Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if element.comment %}
+                    <div class="mb-3">
+                        <strong>Comment:</strong>
+                        <p class="mt-2 text-muted">{{ element.comment }}</p>
+                    </div>
+                    {% endif %}
+                    {% if element.references %}
+                    <div class="mb-3">
+                        <strong>References:</strong>
+                        <p class="mt-2 text-muted">{{ element.references }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- 侧边栏 -->
+        <div class="col-lg-4">
+            <!-- 操作卡片 -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Actions</h5>
+                </div>
+                <div class="card-body">
+                     <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.edit_is_element', id=element.id) }}" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i>Edit Element
+                        </a>
+                        <a href="{{ url_for('search.element_detail', id=element.id) }}" class="btn btn-outline-info" target="_blank">
+                            <i class="fas fa-external-link-alt me-2"></i>View Public Page
+                        </a>
+                        <button class="btn btn-outline-secondary" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i>Print
+                        </button>
+                     </div>
+                </div>
+            </div>
+
+            <!-- 提交者信息 -->
+            {% if element.submitter_first_name or element.submitter_last_name or element.submitter_email or element.submitter_institution %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Submitter Info</h5>
+                </div>
+                <div class="card-body">
+                     {% if element.submitter_first_name or element.submitter_last_name %}
+                     <p class="mb-2"><strong>Name:</strong> {{ element.submitter_first_name }} {{ element.submitter_last_name }}</p>
+                     {% endif %}
+                     {% if element.submitter_email %}
+                     <p class="mb-2"><strong>Email:</strong> <a href="mailto:{{ element.submitter_email }}">{{ element.submitter_email }}</a></p>
+                     {% endif %}
+                     {% if element.submitter_institution %}
+                     <p class="mb-2"><strong>Institution:</strong> {{ element.submitter_institution }}</p>
+                     {% endif %}
+                     {% if element.submitter_department %}
+                     <p class="mb-2"><strong>Department:</strong> {{ element.submitter_department }}</p>
+                     {% endif %}
+                     {% if element.submitter_country %}
+                     <p class="mb-2"><strong>Country:</strong> {{ element.submitter_country }}</p>
+                     {% endif %}
+                     {% if element.submitter_telephone %}
+                     <p class="mb-2"><strong>Phone:</strong> {{ element.submitter_telephone }}</p>
+                     {% endif %}
+                </div>
+            </div>
+            {% elif element.submitter %}
+            <!-- 备用：通过关系查询用户信息（当submitter_*字段为空时） -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Submitter Info</h5>
+                </div>
+                <div class="card-body">
+                     <p class="mb-2"><strong>Username:</strong> {{ element.submitter.username }}</p>
+                     {% if element.submitter.email %}
+                     <p class="mb-2"><strong>Email:</strong> <a href="mailto:{{ element.submitter.email }}">{{ element.submitter.email }}</a></p>
+                     {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Submitter Info</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-0">No submitter information available</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 状态信息 -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Status Info</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-database me-2 text-muted"></i>Database ID</div>
+                        <span class="badge bg-secondary">{{ element.id }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-calendar-alt me-2 text-muted"></i>Submission Date</div>
+                        <span>{{ element.submission_date.strftime('%Y-%m-%d') if element.submission_date else 'N/A' }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-check-circle me-2"></i>Status</div>
+                        {% if element.status == 'approved' %}
+                        <span class="badge bg-success">Approved</span>
+                        {% elif element.status == 'pending' %}
+                        <span class="badge bg-warning">Pending</span>
+                        {% else %}
+                        <span class="badge bg-danger">Rejected</span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copySequence(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    
+    const text = el.innerText || el.textContent;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.currentTarget;
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-1"></i>Copied';
+        btn.classList.remove('btn-outline-primary');
+        btn.classList.add('btn-success');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-primary');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        alert('Failed to copy to clipboard');
+    });
+}
+</script>
+{% endblock %}
+
+

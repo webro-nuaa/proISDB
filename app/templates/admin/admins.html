@@ -1,0 +1,187 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}Admin Management - proISDB{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Title -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-user-shield me-2"></i>Admin Management
+                </h2>
+                <a href="{{ url_for('admin.create_admin_user') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Create Admin
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Admins List -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>Administrator Accounts
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if admins %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Name</th>
+                            <th>Institution</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for admin in admins %}
+                        <tr class="{{ 'table-warning' if not admin.is_active else '' }}">
+                            <td>{{ admin.id }}</td>
+                            <td>
+                                <strong>{{ admin.username }}</strong>
+                                {% if admin.role == 'root' %}
+                                <span class="badge bg-danger ms-1">ROOT</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if admin.email %}
+                                {{ admin.email }}
+                                {% else %}
+                                <span class="text-muted">
+                                    <i class="fas fa-envelope-open-text"></i> Not set
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if admin.role == 'root' %}
+                                <span class="badge bg-danger">Root</span>
+                                {% else %}
+                                <span class="badge bg-primary">Admin</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ admin.full_name or '-' }}</td>
+                            <td>{{ admin.institution or '-' }}</td>
+                            <td>
+                                {% if admin.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Disabled</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ admin.created_at.strftime('%Y-%m-%d') if admin.created_at else '-' }}</td>
+                            <td>{{ admin.last_login.strftime('%Y-%m-%d %H:%M') if admin.last_login else 'Never' }}</td>
+                            <td>
+                                {% if admin.role != 'root' %}
+                                <div class="btn-group" role="group">
+                                    {% if admin.is_active %}
+                                    <button type="button" class="btn btn-sm btn-warning" 
+                                            onclick="toggleAdminStatus({{ admin.id }}, false)"
+                                            title="Disable Admin">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                    {% else %}
+                                    <button type="button" class="btn btn-sm btn-success" 
+                                            onclick="toggleAdminStatus({{ admin.id }}, true)"
+                                            title="Enable Admin">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                            onclick="deleteAdmin({{ admin.id }}, '{{ admin.username }}')"
+                                            title="Delete Admin">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                {% else %}
+                                <span class="text-muted"><i class="fas fa-lock"></i> Protected</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>No admin accounts found.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete admin user <strong id="deleteUsername"></strong>?</p>
+                <p class="text-danger"><strong>This action cannot be undone!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleAdminStatus(adminId, enable) {
+    const action = enable ? 'enable' : 'disable';
+    if (confirm(`Are you sure you want to ${action} this admin?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/admins/${adminId}/${action}`;
+        
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = 'csrf_token';
+        csrf.value = '{{ csrf_token() }}';
+        form.appendChild(csrf);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function deleteAdmin(adminId, username) {
+    document.getElementById('deleteUsername').textContent = username;
+    document.getElementById('deleteForm').action = `/admin/admins/${adminId}/delete`;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

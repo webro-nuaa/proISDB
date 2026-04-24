@@ -1,0 +1,854 @@
+{% extends "layout/base.html" %}
+
+{% block title %}{{ article.title }} - Knowledge{% endblock %}
+
+{% block extra_head %}
+<meta name="description" content="{{ article.summary or (article.content | markdown_text) }}">
+<meta name="keywords" content="{{ article.tags | map(attribute='name') | join(', ') }}">
+
+<!-- 代码高亮样式 -->
+<style>
+{{ get_markdown_css() | safe }}
+
+/* 禁用浏览器原生平滑滚动，避免与jQuery动画冲突 */
+html {
+    scroll-behavior: auto !important;
+}
+
+/* 自定义Markdown样式 */
+.article-content {
+    line-height: 1.8;
+    font-size: 1.1rem;
+    color: #2c3e50;
+}
+
+.article-content h1,
+.article-content h2,
+.article-content h3,
+.article-content h4,
+.article-content h5,
+.article-content h6 {
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    line-height: 1.4;
+    position: relative;
+}
+
+/* 标题永久链接样式 - 默认隐藏 */
+.article-content .headerlink {
+    opacity: 0;
+    margin-left: 0.5rem;
+    font-size: 0.7em;
+    color: #667eea !important;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+/* 鼠标悬停标题时显示链接 */
+.article-content h1:hover .headerlink,
+.article-content h2:hover .headerlink,
+.article-content h3:hover .headerlink,
+.article-content h4:hover .headerlink,
+.article-content h5:hover .headerlink,
+.article-content h6:hover .headerlink {
+    opacity: 1;
+}
+
+/* 链接本身悬停时保持显示 */
+.article-content .headerlink:hover {
+    opacity: 1;
+    color: #764ba2 !important;
+}
+
+/* 强制设置标题大小 - 使用更高优先级 */
+.card-body .article-content h1 { 
+    font-size: 2.2rem !important; 
+    color: #2c3e50 !important; 
+    border-bottom: 3px solid #667eea !important;
+    padding-bottom: 0.5rem !important;
+}
+.card-body .article-content h2 { 
+    font-size: 1.8rem !important; 
+    color: #34495e !important; 
+    border-bottom: 2px solid #e9ecef !important;
+    padding-bottom: 0.3rem !important;
+}
+.card-body .article-content h3 { 
+    font-size: 1.5rem !important; 
+    color: #34495e !important; 
+}
+.card-body .article-content h4 { 
+    font-size: 1.3rem !important; 
+    color: #34495e !important; 
+}
+.card-body .article-content h5 { 
+    font-size: 1.15rem !important; 
+    color: #34495e !important; 
+}
+.card-body .article-content h6 { 
+    font-size: 1rem !important; 
+    color: #34495e !important; 
+}
+
+.article-content p {
+    margin-bottom: 1.5rem;
+    text-align: justify;
+    text-justify: inter-word;
+}
+
+.article-content strong {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.article-content em {
+    color: #667eea;
+    font-style: italic;
+}
+
+.article-content a {
+    color: #667eea;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+}
+
+.article-content a:hover {
+    color: #5a6fd8;
+    border-bottom-color: #5a6fd8;
+}
+
+.article-content code {
+    background-color: #f8f9fa;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.3rem;
+    font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+    color: #e74c3c;
+    font-size: 0.9em;
+    border: 1px solid #e9ecef;
+}
+
+.article-content pre {
+    background-color: #2d3748;
+    color: #e2e8f0;
+    border-radius: 0.8rem;
+    padding: 1.5rem;
+    overflow-x: auto;
+    margin: 2rem 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.article-content pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+    font-size: 0.9rem;
+    border: none;
+}
+
+.article-content blockquote {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-left: 4px solid #667eea;
+    border-radius: 0.5rem;
+    font-style: italic;
+    color: #555;
+}
+
+.article-content ul,
+.article-content ol {
+    margin-bottom: 1.5rem;
+    padding-left: 2rem;
+}
+
+.article-content li {
+    margin-bottom: 0.8rem;
+    line-height: 1.6;
+}
+
+.article-content hr {
+    margin: 3rem 0;
+    border: none;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #667eea, transparent);
+}
+
+.article-content .highlight {
+    margin: 2rem 0;
+    border-radius: 0.8rem;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.article-content .highlight pre {
+    margin: 0;
+    border: none;
+    background: #2d3748;
+}
+
+.article-content .table-responsive {
+    margin: 2rem 0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.article-content table {
+    background: white;
+}
+
+.article-content .alert {
+    margin: 2rem 0;
+    border-radius: 0.5rem;
+    border-left: 4px solid #667eea;
+}
+
+/* 目录样式 */
+.toc-wrapper {
+    /* 移除sticky定位，因为父级已经是sticky了 */
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
+}
+
+.toc-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+
+.toc-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.toc-wrapper::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 10px;
+}
+
+.toc-wrapper::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #5a6fd8, #6a3f8f);
+}
+
+.table-of-contents {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 15px;
+    padding: 1.2rem 1rem;
+    border-left: 4px solid #667eea;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+    /* 移除hover变化，保持尺寸稳定 */
+}
+
+.toc-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.toc-list li {
+    margin-bottom: 0.3rem;
+}
+
+.toc-list a {
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: block;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.toc-list a::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    transition: height 0.3s ease;
+    border-radius: 0 2px 2px 0;
+}
+
+.toc-list a:hover {
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.08);
+}
+
+.toc-list a:hover::before {
+    height: 70%;
+}
+
+.toc-list a.active {
+    color: #667eea;
+    font-weight: 600;
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.15) 0%, rgba(102, 126, 234, 0.05) 100%);
+}
+
+.toc-list a.active::before {
+    height: 70%;
+}
+
+/* 层级缩进 - 通过li实现 */
+.toc-list .toc-item-h1 {
+    padding-left: 0;
+}
+
+.toc-list .toc-item-h2 {
+    padding-left: 1rem;
+}
+
+.toc-list .toc-item-h3 {
+    padding-left: 2.5rem;
+}
+
+.toc-list .toc-item-h4 {
+    padding-left: 4rem;
+}
+
+/* 层级1 - H1 */
+.toc-list .toc-h1 {
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    color: #2c3e50 !important;
+    margin-top: 0.5rem;
+}
+
+.toc-list .toc-h1::after {
+    content: '●';
+    margin-left: 0.5rem;
+    color: #667eea;
+    font-size: 0.6rem;
+}
+
+/* 层级2 - H2 */
+.toc-list .toc-h2 {
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    color: #34495e !important;
+}
+
+.toc-list .toc-h2::after {
+    content: '▸';
+    margin-left: 0.5rem;
+    color: #667eea;
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+/* 层级3 - H3 */
+.toc-list .toc-h3 {
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    color: #6c757d !important;
+}
+
+.toc-list .toc-h3::after {
+    content: '·';
+    margin-left: 0.5rem;
+    color: #667eea;
+    opacity: 0.6;
+    font-size: 1rem;
+}
+
+/* 层级4 - H4 */
+.toc-list .toc-h4 {
+    font-weight: 400 !important;
+    font-size: 0.8rem !important;
+    color: #868e96 !important;
+}
+
+.toc-list .toc-h4::after {
+    content: '-';
+    margin-left: 0.5rem;
+    color: #667eea;
+    opacity: 0.5;
+}
+
+/* 悬停时显示层级符号 */
+.toc-list a:hover::after {
+    opacity: 1 !important;
+    color: #764ba2 !important;
+}
+</style>
+
+<!-- Open Graph tags -->
+<meta property="og:title" content="{{ article.title }}">
+<meta property="og:description" content="{{ article.summary or article.content[:200] + '...' }}">
+<meta property="og:type" content="article">
+<meta property="og:url" content="{{ request.url }}">
+{% if article.featured_image %}
+<meta property="og:image" content="{{ article.featured_image }}">
+{% endif %}
+
+<!-- 文章结构化数据 -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "{{ article.title }}",
+  "description": "{{ article.summary or article.content[:200] + '...' }}",
+  "author": {
+    "@type": "Person",
+    "name": "{{ article.author.username if article.author else 'proISDB' }}"
+  },
+  "datePublished": "{{ article.published_at.isoformat() if article.published_at else article.created_at.isoformat() }}",
+  "dateModified": "{{ article.updated_at.isoformat() if article.updated_at else article.created_at.isoformat() }}",
+  {% if article.featured_image %}
+  "image": "{{ article.featured_image }}",
+  {% endif %}
+  "publisher": {
+    "@type": "Organization",
+    "name": "proISDB",
+    "url": "{{ url_for('main.index', _external=True) }}"
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- 左侧栏：返回按钮和大纲 -->
+        <div class="col-lg-3 d-none d-lg-block">
+            <div style="position: sticky; top: 20px;">
+                <!-- 导航卡片 -->
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <!-- 返回按钮 -->
+                        <div class="mb-3">
+                            <a href="{{ url_for('knowledge.index') }}" class="btn btn-outline-primary btn-sm w-100">
+                                <i class="fas fa-arrow-left me-2"></i>Back
+                            </a>
+                        </div>
+                        
+                        <!-- 分隔线 -->
+                        <hr class="my-3">
+                        
+                        <!-- 大纲 -->
+                        <div class="toc-wrapper">
+                            <div class="table-of-contents">
+                                <ul class="toc-list" id="toc"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主要内容 -->
+        <div class="col-lg-9">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-5">
+                    <!-- 文章标题 -->
+                    <h1 class="card-title mb-4" style="font-size: 2.5rem; font-weight: 700; color: #2c3e50; line-height: 1.3;">
+                        {{ article.title }}
+                    </h1>
+                    
+                    <!-- 文章元信息 -->
+                    <div class="article-meta mb-5 pb-4 border-bottom">
+                        <div class="d-flex flex-wrap align-items-center gap-4 text-muted">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-calendar me-2 text-primary"></i>
+                                <span>{{ article.published_at.strftime('%Y-%m-%d') if article.published_at else article.created_at.strftime('%Y-%m-%d') }}</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-eye me-2 text-success"></i>
+                                <span>{{ article.view_count }} views</span>
+                            </div>
+                            {% if article.updated_at and article.updated_at != article.created_at %}
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-edit me-2 text-warning"></i>
+                                <span>Updated {{ article.updated_at.strftime('%m-%d') }}</span>
+                            </div>
+                            {% endif %}
+                            {% if article.author %}
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user me-2 text-info"></i>
+                                <span>{{ article.author.full_name if article.author.full_name else article.author.username }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- 文章摘要 -->
+                    {% if article.summary %}
+                    <div class="article-summary mb-5 p-4 rounded-3" style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-left: 4px solid #667eea;">
+                        <h6 class="text-primary mb-3 fw-bold">
+                            <i class="fas fa-quote-left me-2"></i>Abstract
+                        </h6>
+                        <p class="mb-0 text-dark" style="font-size: 1.1rem; line-height: 1.6;">{{ article.summary }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- 文章内容 -->
+                    <!-- 调试：显示原始内容 -->
+                    <div style="display:none;" id="raw-content">{{ article.content }}</div>
+                    
+                    <!-- 调试：测试markdown filter -->
+                    <div style="display:none;" id="test-markdown">{{ "# Test Heading\n\nThis is a test paragraph." | markdown | safe }}</div>
+                    
+                    <div class="article-content" style="font-size: 1.1rem; line-height: 1.8;">
+                        {{ article.content | markdown | safe }}
+                    </div>
+                    
+                    <!-- 文章标签 -->
+                    {% if article.tags %}
+                    <div class="article-tags mt-5 pt-4 border-top">
+                        <h6 class="text-muted mb-3 fw-bold">
+                            <i class="fas fa-tags me-2"></i>Related Tags
+                        </h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for tag in article.tags %}
+                            <a href="{{ url_for('knowledge.tag_articles', name=tag.name) }}" 
+                               class="badge text-decoration-none py-2 px-3 rounded-pill" 
+                               style="background-color: {{ tag.color }}; font-size: 0.9rem;">
+                                {{ tag.name }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    console.log('Article page loaded');
+    console.log('Article content element:', $('.article-content').length);
+    console.log('Article content HTML:', $('.article-content').html()?.substring(0, 200));
+    console.log('Raw content:', $('#raw-content').text().substring(0, 100));
+    console.log('Test markdown:', $('#test-markdown').html());
+    
+    // 生成目录
+    generateTableOfContents();
+    
+    // 图片优化
+    optimizeImages();
+    
+    // 代码高亮
+    highlightCode();
+    
+    // 滚动监听
+    setupScrollSpy();
+});
+
+function generateTableOfContents() {
+    console.log('Generating TOC...');
+    const toc = $('#toc');
+    const headings = $('.article-content').find('h1, h2, h3, h4');
+    
+    console.log('Found headings:', headings.length);
+    
+    if (headings.length === 0) {
+        console.log('No headings found, hiding TOC');
+        $('.toc-wrapper').hide();
+        return;
+    }
+    
+    headings.each(function(index) {
+        const heading = $(this);
+        const level = this.tagName.toLowerCase();
+        const text = heading.text();
+        const id = 'heading-' + index;
+        
+        console.log('Heading:', level, text, 'will add class:', 'toc-' + level);
+        
+        // 给标题添加id
+        heading.attr('id', id);
+        
+        // 创建目录项
+        const tocItem = $('<li></li>').addClass('toc-item-' + level).css({
+            'margin-bottom': '0.3rem',
+            'list-style': 'none'
+        });
+        
+        const tocLink = $('<a></a>')
+            .attr('href', '#' + id)
+            .addClass('toc-' + level)
+            .text(text)
+            .css({
+                'display': 'block',
+                'padding': '0.6rem 1rem',
+                'border-radius': '8px',
+                'text-decoration': 'none',
+                'transition': 'all 0.3s ease',
+                'position': 'relative',
+                'overflow': 'hidden'
+            });
+        
+        // 根据层级设置样式
+        let paddingLeft = '0';
+        let fontSize = '1.1rem';
+        let fontWeight = '700';
+        let color = '#2c3e50';
+        let symbol = '●';
+        let symbolColor = '#667eea';
+        let symbolSize = '0.75rem';
+        
+        if (level === 'h2') {
+            paddingLeft = '1rem';
+            fontSize = '1.05rem';
+            fontWeight = '600';
+            color = '#34495e';
+            symbol = '▸';
+            symbolSize = '0.9rem';
+        } else if (level === 'h3') {
+            paddingLeft = '2.5rem';
+            fontSize = '1rem';
+            fontWeight = '500';
+            color = '#6c757d';
+            symbol = '·';
+            symbolSize = '1.15rem';
+        } else if (level === 'h4') {
+            paddingLeft = '4rem';
+            fontSize = '0.95rem';
+            fontWeight = '400';
+            color = '#868e96';
+            symbol = '—';
+            symbolSize = '0.85rem';
+        }
+        
+        tocItem.css('padding-left', paddingLeft);
+        tocLink.css({
+            'font-size': fontSize,
+            'font-weight': fontWeight,
+            'color': color
+        });
+        
+        // 添加层级符号
+        const symbolSpan = $('<span></span>')
+            .text(' ' + symbol)
+            .css({
+                'margin-left': '0.5rem',
+                'color': symbolColor,
+                'opacity': '0.6',
+                'font-size': symbolSize,
+                'transition': 'all 0.3s ease'
+            });
+        
+        tocLink.append(symbolSpan);
+        
+        // 悬停效果 - 不改变元素尺寸
+        tocLink.hover(
+            function() {
+                $(this).css({
+                    'background': 'rgba(102, 126, 234, 0.08)',
+                    'color': '#667eea'
+                });
+                $(this).find('span').css({
+                    'opacity': '1',
+                    'color': '#764ba2'
+                });
+            },
+            function() {
+                if (!$(this).hasClass('active')) {
+                    $(this).css({
+                        'background': 'transparent',
+                        'color': color
+                    });
+                    $(this).find('span').css({
+                        'opacity': '0.6',
+                        'color': symbolColor
+                    });
+                }
+            }
+        );
+        
+        // 点击效果
+        tocLink.on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const targetId = $(this).attr('href');
+            const target = $(targetId);
+            
+            if (target.length) {
+                // 设置标记，禁用scrollSpy和导航栏监听器
+                window.tocScrolling = true;
+                window.disableNavbarScroll = true;
+                
+                // 移除所有active类
+                $('.toc-list a').removeClass('active').each(function() {
+                    const originalColor = $(this).data('original-color') || '#34495e';
+                    $(this).css({
+                        'background': 'transparent',
+                        'color': originalColor
+                    });
+                    $(this).find('span').css({
+                        'opacity': '0.6',
+                        'color': symbolColor
+                    });
+                });
+                
+                // 添加active到当前元素
+                $(this).addClass('active').css({
+                    'background': 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+                    'color': '#667eea'
+                });
+                $(this).find('span').css({
+                    'opacity': '1',
+                    'color': '#764ba2'
+                });
+                
+                // 平滑滚动
+                $('html, body').stop().animate({
+                    scrollTop: target.offset().top - 80
+                }, 600, 'swing', function() {
+                    // 动画完成后重新启用scrollSpy和导航栏监听器
+                    setTimeout(function() {
+                        window.tocScrolling = false;
+                        window.disableNavbarScroll = false;
+                    }, 100);
+                });
+            }
+            
+            return false;
+        });
+        
+        // 存储原始颜色用于恢复
+        tocLink.data('original-color', color);
+        
+        tocItem.append(tocLink);
+        toc.append(tocItem);
+        
+        console.log('Added TOC item with padding:', tocItem.css('padding-left'));
+    });
+    
+    // 调试：输出所有TOC链接
+    console.log('All TOC links:');
+    $('.toc-list a').each(function() {
+        console.log('  Class:', this.className, 'Text:', $(this).text().substring(0, 30));
+    });
+}
+
+function setupScrollSpy() {
+    const headings = $('.article-content').find('h1, h2, h3, h4');
+    const tocLinks = $('.toc-list a');
+    
+    if (headings.length === 0) return;
+    
+    let isScrolling = false; // 标记是否正在通过点击滚动
+    
+    // 存储标记到window对象，供点击事件使用
+    window.tocScrolling = false;
+    
+    $(window).scroll(function() {
+        // 如果正在通过点击滚动，不执行scrollSpy
+        if (window.tocScrolling) return;
+        
+        let current = '';
+        
+        headings.each(function() {
+            const heading = $(this);
+            const top = heading.offset().top;
+            
+            if ($(window).scrollTop() >= top - 100) {
+                current = heading.attr('id');
+            }
+        });
+        
+        tocLinks.removeClass('active');
+        if (current) {
+            const activeLink = tocLinks.filter('[href="#' + current + '"]');
+            activeLink.addClass('active');
+            
+            // 应用active样式 - 不使用box-shadow
+            const originalColor = activeLink.data('original-color') || '#34495e';
+            activeLink.css({
+                'background': 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+                'color': '#667eea'
+            });
+            activeLink.find('span').css({
+                'opacity': '1',
+                'color': '#764ba2'
+            });
+        }
+    });
+}
+
+function optimizeImages() {
+    $('.article-content img').each(function() {
+        const img = $(this);
+        
+        // 添加响应式类和样式
+        img.addClass('img-fluid rounded shadow-sm my-3')
+           .css({
+               'cursor': 'pointer',
+               'transition': 'transform 0.3s ease'
+           });
+        
+        // 悬停效果
+        img.hover(
+            function() {
+                $(this).css('transform', 'scale(1.02)');
+            },
+            function() {
+                $(this).css('transform', 'scale(1)');
+            }
+        );
+        
+        // 添加点击放大功能
+        img.click(function() {
+            const modal = $(`
+                <div class="modal fade" tabindex="-1">
+                    <div class="modal-dialog modal-xl modal-dialog-centered">
+                        <div class="modal-content border-0 rounded-3">
+                            <div class="modal-header border-0">
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-0">
+                                <img src="${img.attr('src')}" class="img-fluid w-100 rounded-3" alt="${img.attr('alt') || ''}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+            
+            modal.modal('show').on('hidden.bs.modal', function() {
+                modal.remove();
+            });
+        });
+    });
+}
+
+function highlightCode() {
+    // 为代码块添加现代化样式
+    $('.article-content pre').addClass('rounded-3 shadow-sm')
+                             .css({
+                                 'background': '#2d3748',
+                                 'color': '#e2e8f0',
+                                 'padding': '1.5rem',
+                                 'margin': '1.5rem 0',
+                                 'border': '1px solid #4a5568'
+                             });
+    
+    $('.article-content code').not('pre code')
+                              .addClass('rounded px-2 py-1')
+                              .css({
+                                  'background': '#f7fafc',
+                                  'color': '#e53e3e',
+                                  'font-size': '0.9em',
+                                  'border': '1px solid #e2e8f0'
+                              });
+    
+    // 为表格添加样式
+    $('.article-content table').addClass('table table-striped table-hover rounded shadow-sm my-4')
+                               .wrap('<div class="table-responsive"></div>');
+    
+    // 为引用块添加样式
+    $('.article-content blockquote').addClass('border-start border-primary border-3 bg-light rounded p-3 my-4')
+                                    .css('margin-left', '0');
+}
+</script>
+{% endblock %}

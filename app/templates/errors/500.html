@@ -1,0 +1,75 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Server Error - proISDB{% endblock %}
+
+{% block extra_css %}
+<style>
+.error-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    padding: 40px;
+    text-align: center;
+}
+
+.error-header .error-code {
+    font-size: 6rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    opacity: 0.9;
+}
+
+.error-header h2 {
+    margin-bottom: 20px;
+}
+
+.error-header p {
+    margin-bottom: 25px;
+    opacity: 0.9;
+}
+
+.error-icon {
+    opacity: 0.8;
+    margin-top: 20px;
+}
+
+.btn {
+    border-radius: 25px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="error-header">
+        <div class="error-code">500</div>
+        <h2>Internal Server Error</h2>
+        <p>Sorry, the server encountered an error. We are working to fix it.</p>
+        <div class="error-icon">
+            <i class="fas fa-server fa-4x"></i>
+        </div>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                <a class="btn btn-primary" href="{{ url_for('main.index') }}">
+                    <i class="fas fa-home me-2"></i>Back to Home
+                </a>
+                <a class="btn btn-outline-secondary" href="javascript:history.back();">
+                    <i class="fas fa-arrow-left me-2"></i>Go Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

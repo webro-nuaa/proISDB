@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      SECRET_KEY: ci-test-secret-key
+      MYSQL_PASSWORD: ci_test_password
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: python -m pytest tests/ -v --tb=short
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: vars.DOCKERHUB_USERNAME != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ vars.DOCKERHUB_USERNAME != '' }}
+          tags: |
+            ${{ vars.DOCKERHUB_USERNAME || 'insertq' }}/insertq-web:latest
+            ${{ vars.DOCKERHUB_USERNAME || 'insertq' }}/insertq-web:${{ github.sha }}
+
+      - name: Export offline image
+        run: |
+          docker save insertq-web:latest | gzip > insertq-web.tar.gz
+        if: always()
+
+      - name: Upload offline image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: insertq-web-image
+          path: insertq-web.tar.gz
+          retention-days: 7
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH || '/opt/insertq' }}
+            docker compose pull web celery_worker
+            docker compose up -d --no-deps web celery_worker
+            sleep 5
+            curl -f http://localhost:5500/health || exit 1

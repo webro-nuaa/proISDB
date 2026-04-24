@@ -1,0 +1,24 @@
+{
+  "version": "1.2",
+  "dbname": "is_elements_prot",
+  "dbtype": "Protein",
+  "db-version": 5,
+  "description": "/home/webro/code/InsertQ/app/../blast_db/orf_sequences.fasta",
+  "number-of-letters": 11853,
+  "number-of-sequences": 31,
+  "last-updated": "2026-02-03T13:13:00",
+  "number-of-volumes": 1,
+  "bytes-total": 65484,
+  "bytes-to-cache": 12285,
+  "files": [
+    "is_elements_prot.pdb",
+    "is_elements_prot.phr",
+    "is_elements_prot.pin",
+    "is_elements_prot.pog",
+    "is_elements_prot.pos",
+    "is_elements_prot.pot",
+    "is_elements_prot.psq",
+    "is_elements_prot.ptf",
+    "is_elements_prot.pto"
+  ]
+}

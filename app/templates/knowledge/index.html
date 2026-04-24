@@ -1,0 +1,325 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Popular Science Knowledge - proISDB{% endblock %}
+
+{% block extra_css %}
+<style>
+.knowledge-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    padding: 40px;
+}
+
+.article-item {
+    background: white;
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+    padding: 25px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.article-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.article-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+}
+
+.article-title {
+    color: #2c3e50;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.article-title:hover {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.article-summary {
+    color: #6c757d;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.article-meta {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #8b949e;
+    gap: 20px;
+}
+
+.article-meta .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.article-meta i {
+    color: #667eea;
+    width: 16px;
+    text-align: center;
+}
+
+.article-tags {
+    margin-bottom: 15px;
+}
+
+.article-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    text-decoration: none;
+    color: white;
+    margin-right: 8px;
+    margin-bottom: 5px;
+    transition: opacity 0.2s ease;
+}
+
+.article-tag:hover {
+    opacity: 0.8;
+    color: white;
+    text-decoration: none;
+}
+
+.pagination {
+    margin-top: 40px;
+}
+
+.pagination .page-link {
+    border-radius: 10px;
+    margin: 0 3px;
+    border: 2px solid #e9ecef;
+    color: #667eea;
+    padding: 12px 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.pagination .page-link:hover {
+    background-color: #667eea;
+    border-color: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    opacity: 0.3;
+    margin-bottom: 20px;
+    display: block;
+}
+
+.article-count {
+    background: rgba(255,255,255,0.2);
+    padding: 8px 20px;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    display: inline-block;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- 页面头部 -->
+    <div class="knowledge-header text-center">
+        <h1 class="mb-2">
+            <i class="fas fa-graduation-cap me-3"></i>Knowledge
+        </h1>
+        <p class="mb-3 opacity-75">Explore insights of insertion sequence elements and learn cutting-edge molecular biology knowledge.</p>
+        <div class="article-count">Total {{ articles.total }} articles</div>
+        {% if current_user.is_authenticated and current_user.is_admin() %}
+        <div class="mt-3">
+            <a href="{{ url_for('knowledge.admin_index') }}" class="btn btn-light">
+                <i class="fas fa-cog me-2"></i>Manage Knowledge Base
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 文章列表 -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            {% if articles.items %}
+                {% for article in articles.items %}
+                <div class="article-item">
+                    <div class="row">
+                        <div class="{{ 'col-md-8' if article.featured_image else 'col-12' }}">
+                            <a href="{{ url_for('knowledge.article_detail', slug=article.slug) }}" class="article-title text-decoration-none">
+                                {{ article.title }}
+                            </a>
+                            
+                            <div class="article-summary">
+                                {{ article.summary|truncate_text(200) }}
+                            </div>
+                    
+                            <!-- 标签 -->
+                            {% if article.tags %}
+                            <div class="article-tags">
+                                {% for tag in article.tags[:3] %}
+                                <a href="{{ url_for('knowledge.tag_articles', name=tag.name) }}" 
+                                   class="article-tag" 
+                                   style="background-color: {{ tag.color }}">{{ tag.name }}</a>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            
+                            <!-- 文章元信息 -->
+                            <div class="article-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-user"></i>
+                                    {{ article.author.full_name or article.author.username }}
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ article.published_at|datetime('%Y-%m-%d') }}
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-eye"></i>
+                                    {{ article.view_count }} views
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 文章缩略图 -->
+                        {% if article.featured_image %}
+                        <div class="col-md-4">
+                            <div class="article-thumbnail">
+                                <img src="{{ article.featured_image }}" 
+                                     class="img-fluid rounded" 
+                                     alt="{{ article.title }}"
+                                     referrerpolicy="no-referrer"
+                                     style="width: 100%; height: 120px; object-fit: cover;">
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- 分页 -->
+                {% if articles.pages > 1 %}
+                <nav aria-label="Articles pagination" class="d-flex justify-content-center">
+                    <ul class="pagination">
+                        {% if articles.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('knowledge.index', page=articles.prev_num) }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page_num in articles.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                            {% if page_num %}
+                                {% if page_num != articles.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('knowledge.index', page=page_num) }}">{{ page_num }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">…</span>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if articles.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('knowledge.index', page=articles.next_num) }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-book-open"></i>
+                    <h5>No knowledge articles yet</h5>
+                    <p class="text-muted">The knowledge base is under construction. Stay tuned!</p>
+                    {% if current_user.is_authenticated and current_user.is_admin() %}
+                    <a href="{{ url_for('knowledge.admin_index') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add First Article
+                    </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 文章标题悬停效果
+    $('.article-title').hover(
+        function() {
+            $(this).addClass('text-primary');
+        },
+        function() {
+            $(this).removeClass('text-primary');
+        }
+    );
+    
+    // 标签悬停效果
+    $('.article-tag').hover(
+        function() {
+            $(this).css('opacity', '0.8');
+        },
+        function() {
+            $(this).css('opacity', '1');
+        }
+    );
+    
+    // 文章项悬停效果
+    $('.article-item').each(function() {
+        $(this).hover(
+            function() {
+                $(this).find('.article-title').addClass('text-primary');
+            },
+            function() {
+                $(this).find('.article-title').removeClass('text-primary');
+            }
+        );
+    });
+});
+</script>
+{% endblock %}

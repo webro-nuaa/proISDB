@@ -1,0 +1,139 @@
+{% extends "layout/base.html" %}
+
+{% block title %}API Documentation{% endblock %}
+
+{% block extra_css %}
+<style>
+.api-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    padding: 40px;
+    text-align: center;
+}
+
+.api-header h1 {
+    margin-bottom: 20px;
+}
+
+.api-header .lead {
+    margin-bottom: 25px;
+    opacity: 0.9;
+}
+
+.api-icon {
+    opacity: 0.8;
+    margin-top: 20px;
+}
+
+.api-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+}
+
+.api-card .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 15px 15px 0 0;
+    padding: 1.5rem;
+}
+
+.api-card .card-body {
+    padding: 2rem;
+}
+
+.table {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: none;
+    padding: 1rem;
+}
+
+.badge {
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- API Header -->
+    <div class="api-header">
+        <h1>
+            <i class="fas fa-code me-3"></i>API Documentation
+        </h1>
+        <p class="lead">Comprehensive API reference for proISDB developers</p>
+        <div class="api-icon">
+            <i class="fas fa-code fa-4x"></i>
+        </div>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card api-card">
+                <div class="card-header text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-code me-2"></i>API Reference
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4>proISDB API Reference</h4>
+                            <p class="text-muted">API services for developers</p>
+                            
+                            <div class="mt-4">
+                                <h5>Available Endpoints</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Endpoint</th>
+                                                <th>Method</th>
+                                                <th>Description</th>
+                                                <th>Auth</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><code>/api/families</code></td>
+                                                <td><span class="badge bg-success">GET</span></td>
+                                                <td>Get IS family list</td>
+                                                <td>Public</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>/api/preview-markdown</code></td>
+                                                <td><span class="badge bg-warning">POST</span></td>
+                                                <td>Markdown preview</td>
+                                                <td>Login required</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <h5>Usage Notes</h5>
+                                <ul>
+                                    <li>All APIs return JSON</li>
+                                    <li>Login required for protected endpoints</li>
+                                    <li>Rate limit: max 100 requests per minute</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

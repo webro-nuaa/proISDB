@@ -1,0 +1,339 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}Database Statistics - proISDB{% endblock %}
+
+{% block extra_css %}
+<style>
+.stats-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    padding: 30px;
+    text-align: center;
+}
+
+.stats-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+    transition: transform 0.2s ease;
+    height: 100%;
+}
+
+.stats-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+.stats-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #667eea;
+}
+
+.stats-label {
+    color: #6c757d;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.5rem;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+    height: 450px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-card h5 {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.chart-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.chart-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chart-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.chart-content::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+}
+
+.chart-content::-webkit-scrollbar-thumb:hover {
+    background: #764ba2;
+}
+
+.distribution-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.distribution-item:last-child {
+    border-bottom: none;
+}
+
+.progress {
+    height: 6px;
+    border-radius: 10px;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    border-radius: 10px;
+}
+
+.badge {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
+}
+
+.search-trend-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+.popular-search-badge {
+    margin: 0.25rem;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Header -->
+    <div class="stats-header">
+        <h2 class="mb-2"><i class="fas fa-chart-bar me-2"></i>Database Statistics</h2>
+        <p class="mb-0 opacity-75">Comprehensive overview of proISDB database</p>
+    </div>
+
+    <!-- Overview Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card p-3 text-center">
+                <div class="stats-number">{{ stats.total_elements }}</div>
+                <div class="stats-label">IS Elements</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card p-3 text-center">
+                <div class="stats-number">{{ family_distribution|length }}</div>
+                <div class="stats-label">Families</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card p-3 text-center">
+                <div class="stats-number">{{ stats.total_articles }}</div>
+                <div class="stats-label">Articles</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card p-3 text-center">
+                <div class="stats-number text-warning">{{ stats.pending_elements }}</div>
+                <div class="stats-label">Pending Review</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Distribution Charts -->
+    <div class="row g-3">
+        <!-- Family Distribution -->
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <h5><i class="fas fa-sitemap me-2 text-primary"></i>Family Distribution</h5>
+                <div class="chart-content">
+                    {% if family_distribution %}
+                        {% for family, count in family_distribution %}
+                        <div class="distribution-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-semibold">{{ family or 'Unknown' }}</span>
+                                <span class="badge bg-primary">{{ count }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" role="progressbar" 
+                                     style="width: {{ (count / stats.total_elements * 100)|round(1) if stats.total_elements > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center my-5">No data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- MGE Type Distribution -->
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <h5><i class="fas fa-layer-group me-2 text-success"></i>MGE Type Distribution</h5>
+                <div class="chart-content">
+                    {% if mge_type_distribution %}
+                        {% for mge_type, count in mge_type_distribution %}
+                        <div class="distribution-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-semibold">{{ mge_type }}</span>
+                                <span class="badge bg-success">{{ count }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {{ (count / stats.total_elements * 100)|round(1) if stats.total_elements > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center my-5">No data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Host Distribution -->
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <h5><i class="fas fa-bacterium me-2 text-info"></i>Host Distribution (Top 10)</h5>
+                <div class="chart-content">
+                    {% if host_distribution %}
+                        {% for host, count in host_distribution %}
+                        <div class="distribution-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-semibold">{{ host }}</span>
+                                <span class="badge bg-info">{{ count }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-info" role="progressbar" 
+                                     style="width: {{ (count / stats.total_elements * 100)|round(1) if stats.total_elements > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center my-5">No data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Length Distribution -->
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <h5><i class="fas fa-ruler me-2 text-warning"></i>Length Distribution</h5>
+                <div class="chart-content">
+                    {% if length_distribution %}
+                        {% set max_count = length_distribution|map(attribute='count')|max %}
+                        {% for item in length_distribution %}
+                        <div class="distribution-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-semibold">{{ item.label }}</span>
+                                <span class="badge bg-warning text-dark">{{ item.count }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" role="progressbar" 
+                                     style="width: {{ (item.count / max_count * 100)|round(1) if max_count > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center my-5">No data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Trends -->
+    {% if search_trends and search_trends|length > 0 %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="search-trend-card">
+                <h5 class="mb-3"><i class="fas fa-search me-2 text-primary"></i>Search Trends (Last 7 Days)</h5>
+                <canvas id="searchTrendsChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Popular Searches -->
+    {% if popular_searches and popular_searches|length > 0 %}
+    <div class="row">
+        <div class="col-12">
+            <div class="search-trend-card">
+                <h5 class="mb-3"><i class="fas fa-fire me-2 text-danger"></i>Popular Searches (Last 7 Days)</h5>
+                <div class="d-flex flex-wrap">
+                    {% for search_term, count in popular_searches %}
+                    <span class="badge bg-primary popular-search-badge">
+                        {{ search_term }} <span class="badge bg-light text-dark ms-1">{{ count }}</span>
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if search_trends and search_trends|length > 0 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+const ctx = document.getElementById('searchTrendsChart');
+const searchData = {
+    labels: [{% for date, count in search_trends %}'{{ date }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+    datasets: [{
+        label: 'Searches',
+        data: [{% for date, count in search_trends %}{{ count }}{% if not loop.last %}, {% endif %}{% endfor %}],
+        borderColor: 'rgb(102, 126, 234)',
+        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+        tension: 0.4,
+        fill: true,
+        borderWidth: 2
+    }]
+};
+
+new Chart(ctx, {
+    type: 'line',
+    data: searchData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                }
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

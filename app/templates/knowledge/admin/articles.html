@@ -1,0 +1,309 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}Article Management - proISDB{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-list me-2"></i>Article Management
+                </h2>
+                <a href="{{ url_for('knowledge.admin_new_article') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>New Article
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 筛选和搜索 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Status Filter</label>
+                            <select name="status" class="form-select">
+                                <option value="">All Status</option>
+                                <option value="draft" {{ 'selected' if current_status == 'draft' }}>Draft</option>
+                                <option value="published" {{ 'selected' if current_status == 'published' }}>Published</option>
+                                <option value="archived" {{ 'selected' if current_status == 'archived' }}>Archived</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Search</label>
+                            <input type="text" name="search" class="form-control" placeholder="Search article title or content..." value="{{ search_query or '' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Search</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文章列表 -->
+    {% if articles.items %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        Article List (Total {{ articles.total }} articles)
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="5%">ID</th>
+                                    <th width="35%">Title</th>
+                                    <th width="12%">Status</th>
+                                    <th width="12%">Category</th>
+                                    <th width="8%">Views</th>
+                                    <th width="12%">Updated At</th>
+                                    <th width="16%">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for article in articles.items %}
+                                <tr>
+                                    <td>{{ article.id }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div>
+                                                <strong>{{ article.title }}</strong>
+                                                {% if article.is_featured %}
+                                                <span class="badge bg-primary ms-2">Featured</span>
+                                                {% endif %}
+                                                <br>
+                                                <small class="text-muted">{{ article.slug }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if article.status == 'published' %}
+                                        <span class="badge bg-success">Published</span>
+                                        {% elif article.status == 'draft' %}
+                                        <span class="badge bg-warning">Draft</span>
+                                        {% elif article.status == 'archived' %}
+                                        <span class="badge bg-secondary">Archived</span>
+                                        {% else %}
+                                        <span class="badge bg-light text-dark">{{ article.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if article.category %}
+                                        <span class="badge bg-info">{{ article.category.name }}</span>
+                                        {% else %}
+                                        <span class="text-muted">Uncategorized</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-eye me-1"></i>{{ article.view_count }}
+                                    </td>
+                                    <td>
+                                        <small>{{ article.updated_at.strftime('%m-%d %H:%M') if article.updated_at else article.created_at.strftime('%m-%d %H:%M') }}</small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('knowledge.admin_view_article', id=article.id) }}" 
+                                               class="btn btn-outline-info" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('knowledge.admin_edit_article', id=article.id) }}" 
+                                               class="btn btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            
+                                            {% if article.status == 'published' %}
+                                            <button type="button" class="btn btn-outline-warning" 
+                                                    title="Unpublish" onclick="togglePublish({{ article.id }}, 'draft')">
+                                                <i class="fas fa-eye-slash"></i>
+                                            </button>
+                                            {% elif article.status == 'draft' %}
+                                            <button type="button" class="btn btn-outline-success" 
+                                                    title="Publish Now" onclick="togglePublish({{ article.id }}, 'published')">
+                                                <i class="fas fa-paper-plane"></i>
+                                            </button>
+                                            {% endif %}
+                                            
+                                            <button type="button" class="btn btn-outline-danger" 
+                                                    title="Delete" onclick="deleteArticle({{ article.id }}, '{{ article.title }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分页 -->
+    {% if articles.pages > 1 %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Pagination">
+                <ul class="pagination justify-content-center">
+                    {% if articles.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('knowledge.admin_articles', page=articles.prev_num, status=current_status) }}">
+                            <i class="fas fa-chevron-left"></i> Prev
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in articles.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != articles.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('knowledge.admin_articles', page=page_num, status=current_status) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if articles.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('knowledge.admin_articles', page=articles.next_num, status=current_status) }}">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- 空状态 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                    <h4>No articles</h4>
+                    <p class="text-muted mb-4">
+                        {% if current_status %}
+                            Current filter has no articles
+                        {% else %}
+                            No articles created yet
+                        {% endif %}
+                    </p>
+                    <div class="d-flex gap-2 justify-content-center">
+                        <a href="{{ url_for('knowledge.admin_new_article') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>New Article
+                        </a>
+                        {% if current_status %}
+                        <a href="{{ url_for('knowledge.admin_articles') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-list me-2"></i>View All
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function deleteArticle(id, title) {
+    if (confirm(`Delete article "${title}"? This action cannot be undone.`)) {
+        // 这里可以实现AJAX删除
+        // 暂时跳转到删除URL
+        window.location.href = `/knowledge/admin/article/${id}/delete`;
+    }
+}
+
+function togglePublish(id, status) {
+    const action = status === 'published' ? 'Publish' : 'Unpublish';
+    const btn = event.target.closest('button');
+    const originalHTML = btn.innerHTML;
+    
+    // 确认操作
+    if (!confirm(`Are you sure to ${action.toLowerCase()} this article?`)) {
+        return;
+    }
+    
+    // 显示loading状态
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+    
+    // 获取CSRF token
+    let csrfToken = $('meta[name=csrf-token]').attr('content');
+    if (!csrfToken) {
+        // 备用方案：从隐藏表单字段获取
+        csrfToken = $('input[name="csrf_token"]').val();
+    }
+    
+    // 发送AJAX请求
+    fetch(`/knowledge/admin/article/${id}/toggle-publish`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({status: status})
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // 显示成功消息
+            alert(data.message || `${action} succeeded`);
+            // 刷新页面以更新状态
+            location.reload();
+        } else {
+            alert(data.message || `${action} failed`);
+            // 恢复按钮状态
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(`${action} failed: ${error.message}`);
+        // 恢复按钮状态
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+    });
+}
+
+$(document).ready(function() {
+    // 表格行悬停效果
+    $('tbody tr').hover(
+        function() { $(this).addClass('table-active'); },
+        function() { $(this).removeClass('table-active'); }
+    );
+});
+</script>
+{% endblock %}

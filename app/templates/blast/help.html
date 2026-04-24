@@ -1,0 +1,111 @@
+{% extends "layout/base.html" %}
+
+{% block title %}BLAST Help - proISDB{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <h1 class="mb-4"><i class="bi bi-question-circle"></i> BLAST Help</h1>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">What is BLAST?</h5>
+                </div>
+                <div class="card-body">
+                    <p>BLAST (Basic Local Alignment Search Tool) is a fast sequence alignment tool used to find similarity between a query sequence and sequences in a database.</p>
+                    <p>proISDB uses local BLAST+ to compare against IS insertion sequence elements in the database.</p>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">BLAST Types</h5>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li><strong>blastn</strong> - Nucleotide sequence alignment (DNA sequences)</li>
+                        <li><strong>blastp</strong> - Protein sequence alignment (amino acid sequences)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Parameter Explanation</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">E-value Threshold</dt>
+                        <dd class="col-sm-9">
+                            Expectation value, represents the probability of finding similar matches by chance in a random database.<br>
+                            <strong>Recommended:</strong> 10 (standard), 0.01 (strict)<br>
+                            Lower E-value = more significant match
+                        </dd>
+
+                        <dt class="col-sm-3">Max Results</dt>
+                        <dd class="col-sm-9">
+                            Maximum number of matches to return<br>
+                            <strong>Recommended:</strong> 50-100
+                        </dd>
+
+                        <dt class="col-sm-3">Word Size</dt>
+                        <dd class="col-sm-9">
+                            Minimum number of consecutive bases for initial match<br>
+                            <strong>11</strong> - Standard (recommended)<br>
+                            <strong>7</strong> - Short sequences or low similarity<br>
+                            <strong>15-20</strong> - High similarity sequences
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">Sequence Format Examples</h5>
+                </div>
+                <div class="card-body">
+                    <h6>FASTA Format (Recommended):</h6>
+                    <pre class="bg-light p-3 rounded font-monospace small">>My_Query_Sequence
+ATGCGATCGATCGATCGATCGATCGATCGATCGATC
+CGATCGATCGATCGATCGATCGATCGATCGATCGAT</pre>
+
+                    <h6>Plain Sequence:</h6>
+                    <pre class="bg-light p-3 rounded font-monospace small">ATGCGATCGATCGATCGATCGATCGATCGATCGATCCGATCGATCGATCGATCGATCGATCGATCGATCGAT</pre>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Result Interpretation</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Alignment Score</dt>
+                        <dd class="col-sm-9">Higher value indicates better match quality</dd>
+
+                        <dt class="col-sm-3">Identity</dt>
+                        <dd class="col-sm-9">Percentage of perfectly matched bases/amino acids</dd>
+
+                        <dt class="col-sm-3">Coverage</dt>
+                        <dd class="col-sm-9">Percentage of alignment range in query and target sequences</dd>
+
+                        <dt class="col-sm-3">E-value Color</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge bg-success">Green</span> - Highly significant (&lt;0.001)<br>
+                            <span class="badge bg-warning">Yellow</span> - Significant (0.001-1)<br>
+                            <span class="badge bg-secondary">Gray</span> - Weakly significant (&gt;1)
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <a href="{{ url_for('blast.index') }}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-arrow-left"></i> Back to BLAST Search
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

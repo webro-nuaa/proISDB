@@ -1,0 +1,890 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Search IS Elements - proISDB{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Search Header -->
+    <div class="search-header">
+        <h1>
+            <i class="fas fa-search me-3"></i>IS Element Search
+        </h1>
+        <p class="lead">Quickly find the IS element information you need in the massive database</p>
+        <div class="search-icon">
+            <i class="fas fa-database fa-4x"></i>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <!-- 搜索表单 -->
+            <div class="search-form-card mb-5">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="card-title text-primary mb-0">
+                            <i class="fas fa-search me-2"></i>
+                            <span id="search-title">{{ 'Advanced Search' if is_advanced else 'Quick Search' }}</span>
+                        </h5>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="toggleSearchMode()">
+                            <i class="fas fa-cog me-1"></i>
+                            <span id="toggle-search-text">{{ 'Simple Search' if is_advanced else 'Advanced Search' }}</span>
+                        </button>
+                    </div>
+                    
+                    <!-- 简单搜索表单 -->
+                    <form id="simple-search-form" method="GET" action="{{ url_for('search.index') }}" {% if is_advanced %}class="d-none"{% endif %}>
+                        <div class="row g-3">
+                            <div class="col-md-9">
+                                <input type="text" name="query" class="form-control form-control-lg" 
+                                       placeholder="Enter IS name, family, host, origin, mge type ... for full-field search..." 
+                                       value="{{ search_params.get('query', '') }}">
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-primary btn-lg w-100 search-submit-btn">
+                                    <i class="fas fa-search me-2"></i>Start Search
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- 高级搜索表单 -->
+                    <form id="advanced-search-form" method="GET" action="{{ url_for('search.index') }}" {% if not is_advanced %}class="d-none" style="display: none !important;"{% endif %}>
+                        <input type="hidden" name="advanced" value="1">
+                        <div class="row g-3">
+                            <!-- IS Name -->
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">IS Name</label>
+                                <input type="text" name="name" class="form-control" 
+                                       placeholder="e.g., IS1, IS5..." 
+                                       value="{{ search_params.get('name', '') }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small text-muted">Match</label>
+                                <select name="name_match" class="form-select">
+                                    <option value="contains" {% if search_params.get('name_match', 'contains') == 'contains' %}selected{% endif %}>Contains</option>
+                                    <option value="begin_with" {% if search_params.get('name_match') == 'begin_with' %}selected{% endif %}>Starts With</option>
+                                    <option value="end_with" {% if search_params.get('name_match') == 'end_with' %}selected{% endif %}>Ends With</option>
+                                    <option value="equal_to" {% if search_params.get('name_match') == 'equal_to' %}selected{% endif %}>Equals</option>
+                                </select>
+                            </div>
+                            
+                            <!-- IS Family -->
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">IS Family</label>
+                                <input type="text" name="family" class="form-control" 
+                                       placeholder="e.g., IS1, IS5..." 
+                                       value="{{ search_params.get('family', '') }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small text-muted">Match</label>
+                                <select name="family_match" class="form-select">
+                                    <option value="contains" {% if search_params.get('family_match', 'contains') == 'contains' %}selected{% endif %}>Contains</option>
+                                    <option value="begin_with" {% if search_params.get('family_match') == 'begin_with' %}selected{% endif %}>Starts With</option>
+                                    <option value="end_with" {% if search_params.get('family_match') == 'end_with' %}selected{% endif %}>Ends With</option>
+                                    <option value="equal_to" {% if search_params.get('family_match') == 'equal_to' %}selected{% endif %}>Equals</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Submit Button -->
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary w-100 search-submit-btn">
+                                    <i class="fas fa-search me-2"></i>Advanced Search
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- 搜索结果 -->
+            {% if results.items %}
+            <div class="results-section">
+                <div class="results-header mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="text-primary fw-bold mb-0">
+                            <i class="fas fa-search-plus me-2"></i>Search Results
+                        </h4>
+                        <div class="results-count">
+                            <span class="badge bg-primary fs-6 px-3 py-2">{{ results.total }} results</span>
+                        </div>
+                    </div>
+                    <hr class="my-3">
+                </div>
+                
+                <div class="results-table">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col"><input type="checkbox" id="select-all-results"></th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Family</th>
+                                    <th scope="col">Group</th>
+                                    <th scope="col">Synomyns</th>
+                                    <th scope="col">Iso</th>
+                                    <th scope="col">Origin</th>
+                                    <th scope="col">Length</th>
+                                    <th scope="col">IR</th>
+                                    <th scope="col">DR</th>
+                                    <th scope="col">ORF1</th>
+                                    <th scope="col">ORF2</th>
+                                    <th scope="col">Accession</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for element in results.items %}
+                                <tr class="result-row" data-href="{{ url_for('search.element_detail', id=element.id) }}">
+                                    <td>
+                                        <input type="checkbox" class="select-item" value="{{ element.id }}" onclick="event.stopPropagation()">
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('search.element_detail', id=element.id) }}" class="text-decoration-none fw-bold">
+                                            {{ element.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ element.family }}</td>
+                                    <td>{{ element.group or 'N/A' }}</td>
+                                    <td>{{ element.synomyns or '' }}</td>
+                                    <td>{{ element.isoform or element.iso or '' }}</td>
+                                    <td>{{ element.origin or '' }}</td>
+                                    <td>{{ element.is_length or element.length or 'N/A' }}</td>
+                                    <td>{{ element.le_cleavage_site or '' }}</td>
+                                    <td>{{ element.re_cleavage_site or '' }}</td>
+                                    <td>{{ element.orf1 if element.orf1 is not none else (element.orf_number or 'N/A') }}</td>
+                                    <td>{{ element.orf2 if element.orf2 is not none else '' }}</td>
+                                    <td><span class="font-monospace">{{ element.accession_number or '' }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- 批量下载申请按钮（所有用户可见） -->
+                <div class="mt-3 mb-3">
+                    <button type="button" class="btn btn-primary" id="apply-download-btn">
+                        <i class="fas fa-download me-2"></i>Apply for Selected Download
+                    </button>
+                </div>
+
+                <!-- 分页组件 -->
+                {% if results.pages > 1 %}
+                <div class="pagination-section mt-5">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="pagination-info">
+                            <span class="text-muted">
+                                Showing {{ (results.page - 1) * results.per_page + 1 }} - {{ (results.page - 1) * results.per_page + results.items|length }}, total {{ results.total }} results
+                            </span>
+                        </div>
+                        
+                        {% set qargs = request.args.to_dict() %}
+                        {% set _ = qargs.pop('page', None) %}
+                        <nav aria-label="Results pagination">
+                            <ul class="pagination mb-0">
+                                <!-- 上一页 -->
+                                {% if results.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('search.index', page=results.prev_num, **qargs) }}">
+                                            <i class="fas fa-chevron-left me-1"></i>Prev
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">
+                                            <i class="fas fa-chevron-left me-1"></i>Prev
+                                        </span>
+                                    </li>
+                                {% endif %}
+                                
+                                <!-- 页码 -->
+                                {% for page_num in results.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                    {% if page_num %}
+                                        {% if page_num != results.page %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('search.index', page=page_num, **qargs) }}">
+                                                    {{ page_num }}
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                <!-- 下一页 -->
+                                {% if results.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('search.index', page=results.next_num, **qargs) }}">
+                                            Next<i class="fas fa-chevron-right ms-1"></i>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">
+                                            Next<i class="fas fa-chevron-right ms-1"></i>
+                                        </span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="empty-state-modern text-center py-5">
+                <div class="empty-icon-wrapper mb-4">
+                    <i class="fas fa-search-plus fa-4x text-primary opacity-75"></i>
+                </div>
+                <h4 class="text-dark mb-3">Ready to search</h4>
+                <p class="text-muted lead mb-4">Enter search conditions to explore the IS element database</p>
+                
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="search-tips bg-light rounded-3 p-4">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-lightbulb me-2"></i>Search Tips
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="tip-item">
+                                        <div class="tip-icon bg-primary bg-opacity-10 rounded-circle p-2 mb-2">
+                                            <i class="fas fa-tag text-primary"></i>
+                                        </div>
+                                        <h6 class="small fw-bold">Search by name</h6>
+                                        <p class="small text-muted mb-0">e.g., IS1, IS5, Tn10</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="tip-item">
+                                        <div class="tip-icon bg-success bg-opacity-10 rounded-circle p-2 mb-2">
+                                            <i class="fas fa-microscope text-success"></i>
+                                        </div>
+                                        <h6 class="small fw-bold">Search by host</h6>
+                                        <p class="small text-muted mb-0">e.g., Escherichia coli</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="tip-item">
+                                        <div class="tip-icon bg-info bg-opacity-10 rounded-circle p-2 mb-2">
+                                            <i class="fas fa-cogs text-info"></i>
+                                        </div>
+                                        <h6 class="small fw-bold">Search by function</h6>
+                                        <p class="small text-muted mb-0">e.g., transposase</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="tip-item">
+                                        <div class="tip-icon bg-warning bg-opacity-10 rounded-circle p-2 mb-2">
+                                            <i class="fas fa-barcode text-warning"></i>
+                                        </div>
+                                        <h6 class="small fw-bold">Search by accession</h6>
+                                        <p class="small text-muted mb-0">e.g., NC_000913</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Apply Download Modal -->
+<div class="modal fade" id="applyDownloadModal" tabindex="-1" aria-labelledby="applyDownloadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('search.apply_download') }}" class="needs-validation" novalidate id="applyDownloadForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="selected_ids" id="download-selected-ids">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="applyDownloadModalLabel">申请批量下载</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">First Name <span class="text-danger">*</span></label>
+                            <input type="text" name="first_name" class="form-control" value="{{ current_user.first_name or '' }}" required maxlength="50" placeholder="Enter first name">
+                            <div class="invalid-feedback">Please enter first name</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" name="last_name" class="form-control" value="{{ current_user.last_name or '' }}" required maxlength="50" placeholder="Enter last name">
+                            <div class="invalid-feedback">Please enter last name</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Institution <span class="text-danger">*</span></label>
+                            <input type="text" name="institution" class="form-control" value="{{ current_user.institution or '' }}" required maxlength="200" placeholder="Enter institution">
+                            <div class="invalid-feedback">Please enter institution</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Department</label>
+                            <input type="text" name="department" class="form-control" maxlength="200" placeholder="Enter department">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Country <span class="text-danger">*</span></label>
+                            <input type="text" name="country" class="form-control" required maxlength="100" placeholder="Enter country">
+                            <div class="invalid-feedback">Please enter country</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control" value="{{ current_user.email or '' }}" required placeholder="Enter email address">
+                            <div class="invalid-feedback">Please enter valid email</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">指定审核管理员 <span class="text-danger">*</span></label>
+                            <select name="assigned_admin" class="form-select" required>
+                                <option value="">-- 请选择 --</option>
+                                {% for a in admins %}
+                                <option value="{{ a.id }}">{{ a.username }}{% if a.full_name %} - {{ a.full_name }}{% endif %}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">请选择审核管理员</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">导出格式 <span class="text-danger">*</span></label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="format" id="format-csv" value="csv" checked required>
+                                <label class="form-check-label" for="format-csv">
+                                    <i class="fas fa-table me-1"></i> CSV (Spreadsheet format with all fields)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="format" id="format-fasta" value="fasta" required>
+                                <label class="form-check-label" for="format-fasta">
+                                    <i class="fas fa-dna me-1"></i> FASTA (Sequence format for bioinformatics analysis)
+                                </label>
+                            </div>
+                            <div class="form-text text-muted small">CSV包含所有字段数据，FASTA仅包含序列信息</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">申请理由 <span class="text-danger">*</span></label>
+                            <textarea name="reason" class="form-control" rows="4" required minlength="10" maxlength="2000" placeholder="请输入申请理由（10-2000字符）"></textarea>
+                            <div class="form-text text-muted small">最少10个字符，最多2000个字符</div>
+                            <div class="invalid-feedback">申请理由长度需在10-2000字符之间</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">提交申请</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+
+<style>
+.search-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    padding: 40px;
+    text-align: center;
+}
+
+.search-header h1 {
+    margin-bottom: 20px;
+}
+
+.search-header .lead {
+    margin-bottom: 25px;
+    opacity: 0.9;
+}
+
+.search-icon {
+    opacity: 0.8;
+    margin-top: 20px;
+}
+
+/* Search Form */
+.search-form-card {
+    background: white;
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+}
+
+/* search-form-card hover removed */
+
+.search-submit-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 15px !important;
+    transition: all 0.3s ease;
+}
+
+.search-submit-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(102,126,234,0.4);
+}
+
+/* Results Card */
+.results-card {
+    background: white;
+    border-radius: 15px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border: none;
+    overflow: hidden;
+}
+
+.results-card .card-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    border: none;
+}
+
+/* Result Items */
+.result-item {
+    transition: all 0.3s ease;
+    position: relative;
+    cursor: pointer;
+}
+
+.result-item:hover {
+    background: linear-gradient(135deg, rgba(102,126,234,0.02), rgba(118,75,162,0.02));
+    transform: translateX(10px);
+}
+
+.result-item:last-child {
+    border-bottom: none !important;
+}
+
+.result-title a {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.result-title a:hover {
+    color: #764ba2 !important;
+}
+
+.result-title a:after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.3s ease;
+}
+
+.result-title a:hover:after {
+    width: 100%;
+}
+
+.result-btn {
+    border-radius: 20px !important;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.result-btn:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.result-btn:hover:before {
+    left: 100%;
+}
+
+.result-btn:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: transparent;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+}
+
+/* Empty State */
+.empty-state {
+    background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+    border-radius: 20px;
+    border: 2px dashed rgba(102,126,234,0.2);
+    margin: 2rem 0;
+}
+
+.search-empty-icon {
+    /* animation removed */
+}
+
+/* Results Section Styles */
+.results-section {
+    margin-top: 2rem;
+}
+
+.results-header h4 {
+    font-size: 1.5rem;
+    margin-bottom: 0;
+}
+
+.results-count .badge {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Result Cards */
+.result-card .card {
+    border-radius: 15px !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid rgba(0,0,0,0.08);
+}
+
+.result-card .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.result-title a {
+    font-size: 1.2rem;
+    transition: color 0.2s ease;
+}
+
+.result-title a:hover {
+    color: #5a6acf !important;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: #6c757d;
+    margin-right: 0.5rem;
+}
+
+.detail-value {
+    color: #212529;
+}
+
+.result-actions {
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+/* Empty State */
+.empty-state-modern {
+    padding: 4rem 2rem;
+}
+
+.empty-icon-wrapper {
+    position: relative;
+}
+
+.search-tips {
+    text-align: left;
+}
+
+.tip-item {
+    text-align: center;
+    padding: 1rem;
+}
+
+.tip-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+/* Pagination Styles */
+.pagination-section {
+    padding: 2rem 0;
+    border-top: 1px solid rgba(0,0,0,0.1);
+    background: rgba(248,249,250,0.5);
+    border-radius: 0 0 15px 15px;
+    margin-top: 0 !important;
+}
+
+.pagination-info {
+    font-size: 0.9rem;
+}
+
+.pagination .page-link {
+    border: 1px solid #dee2e6;
+    color: #667eea;
+    padding: 0.75rem 1rem;
+    margin: 0 2px;
+    border-radius: 8px !important;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.pagination .page-link:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: transparent;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #adb5bd;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+/* 响应式分页 */
+@media (max-width: 768px) {
+    .pagination-section {
+        padding: 1.5rem 1rem;
+    }
+    
+    .pagination-section .d-flex {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center !important;
+    }
+    
+    .pagination .page-link {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    .pagination-info {
+        text-align: center;
+        order: 2;
+    }
+}
+
+/* Badges */
+.badge {
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+    border-radius: 15px !important;
+}
+
+/* Form Controls */
+.form-control:focus,
+.form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102,126,234,0.25);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .search-header h1 {
+        font-size: 2rem !important;
+    }
+    
+    .search-icon {
+        font-size: 3rem !important;
+    }
+    
+    .result-item .col-md-4 {
+        margin-top: 1rem;
+        text-align: left !important;
+    }
+    
+    .result-meta {
+        flex-direction: column;
+        gap: 0.5rem !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Select all checkbox functionality
+document.addEventListener('DOMContentLoaded', function(){
+    const selectAll = document.getElementById('select-all-results');
+    if (selectAll) {
+        selectAll.addEventListener('change', function(e){
+            const checked = e.target.checked;
+            document.querySelectorAll('.select-item').forEach(cb => cb.checked = checked);
+        });
+    }
+});
+
+// jQuery ready for all interactive features  
+$(document).ready(function() {
+    // 批量下载申请按钮
+    $(document).on('click', '#apply-download-btn', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const selected = [];
+        $('.select-item:checked').each(function(){
+            selected.push($(this).val());
+        });
+        
+        if(selected.length === 0){
+            alert('请先选择要申请下载的条目');
+            return;
+        }
+        
+        $('#download-selected-ids').val(selected.join(','));
+        
+        try {
+            var modalEl = document.getElementById('applyDownloadModal');
+            if (!modalEl) {
+                alert('模态窗口未找到，请刷新页面重试');
+                return;
+            }
+            
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                var myModal = new bootstrap.Modal(modalEl);
+                myModal.show();
+            } else if ($.fn.modal) {
+                $(modalEl).modal('show');
+            }
+        } catch (err) {
+            console.error('Error:', err);
+            alert('无法打开申请表单: ' + err.message);
+        }
+    });
+    
+    // 表单验证
+    $('#applyDownloadForm').on('submit', function(e){
+        const form = this;
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+            form.classList.add('was-validated');
+            return false;
+        }
+        
+        const emailInput = form.querySelector('input[name="email"]');
+        if (emailInput.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value)) {
+            e.preventDefault();
+            emailInput.classList.add('is-invalid');
+            alert('邮箱格式不正确');
+            return false;
+        }
+        
+        const reasonInput = form.querySelector('textarea[name="reason"]');
+        if (reasonInput.value.length < 10 || reasonInput.value.length > 2000) {
+            e.preventDefault();
+            reasonInput.classList.add('is-invalid');
+            alert('申请理由长度需在10-2000字符之间');
+            return false;
+        }
+        
+        form.classList.add('was-validated');
+    });
+
+    // 实时验证
+    $('#applyDownloadForm').on('input', function(e){
+        const field = e.target;
+        if (field.name === 'email' && field.value) {
+            const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value);
+            field.classList.toggle('is-invalid', !isValid);
+        }
+        if (field.name === 'reason' && field.value) {
+            const isValid = field.value.length >= 10 && field.value.length <= 2000;
+            field.classList.toggle('is-invalid', !isValid);
+        }
+    });
+
+    // 模态框显示时重置验证
+    $('#applyDownloadModal').on('show.bs.modal', function () {
+        const form = document.getElementById('applyDownloadForm');
+        if (form) {
+            form.classList.remove('was-validated');
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        }
+    });
+    
+    // 行点击
+    $('.result-row').on('click', function(e) {
+        const $t = $(e.target);
+        if ($t.closest('a, button, input').length === 0) {
+            const href = $(this).data('href');
+            if (href) window.location.href = href;
+        }
+    });
+    
+    ensureDefaultSearchMode();
+});
+
+// 搜索模式切换函数
+function ensureDefaultSearchMode() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdvanced = urlParams.get('advanced') === '1';
+    
+    const simpleForm = document.getElementById('simple-search-form');
+    const advancedForm = document.getElementById('advanced-search-form');
+    const searchTitle = document.getElementById('search-title');
+    const toggleText = document.getElementById('toggle-search-text');
+    
+    if (!isAdvanced) {
+        if (simpleForm) simpleForm.classList.remove('d-none');
+        if (advancedForm) {
+            advancedForm.classList.add('d-none');
+            advancedForm.style.display = 'none';
+        }
+        if (searchTitle) searchTitle.textContent = 'Quick Search';
+        if (toggleText) toggleText.textContent = 'Advanced Search';
+    }
+}
+
+function toggleSearchMode() {
+    const simpleForm = document.getElementById('simple-search-form');
+    const advancedForm = document.getElementById('advanced-search-form');
+    const searchTitle = document.getElementById('search-title');
+    const toggleText = document.getElementById('toggle-search-text');
+    
+    if (simpleForm.classList.contains('d-none')) {
+        simpleForm.classList.remove('d-none');
+        simpleForm.style.display = '';
+        advancedForm.classList.add('d-none');
+        advancedForm.style.display = 'none';
+        searchTitle.textContent = 'Quick Search';
+        toggleText.textContent = 'Advanced Search';
+    } else {
+        simpleForm.classList.add('d-none');
+        simpleForm.style.display = 'none';
+        advancedForm.classList.remove('d-none');
+        advancedForm.style.display = '';
+        searchTitle.textContent = 'Advanced Search';
+        toggleText.textContent = 'Simple Search';
+    }
+}
+
+function clearAdvancedForm() {
+    const form = document.getElementById('advanced-search-form');
+    const inputs = form.querySelectorAll('input[type="text"], input[type="number"], select');
+    inputs.forEach(input => {
+        if (input.type === 'text' || input.type === 'number') {
+            input.value = '';
+        } else if (input.tagName === 'SELECT') {
+            input.selectedIndex = 0;
+        }
+    });
+}
+</script>
+{% endblock %}

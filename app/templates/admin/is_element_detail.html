@@ -1,0 +1,237 @@
+<div class="row">
+    <div class="col-md-6">
+        <h6 class="text-primary mb-3">
+            <i class="fas fa-info-circle me-2"></i>Basic Information
+        </h6>
+        <table class="table table-sm table-borderless">
+            <tr>
+                <td class="text-muted" width="30%">ID:</td>
+                <td><span class="badge bg-primary">{{ element.id }}</span></td>
+            </tr>
+            <tr>
+                <td class="text-muted">Name:</td>
+                <td><strong>{{ element.name }}</strong></td>
+            </tr>
+            <tr>
+                <td class="text-muted">Family:</td>
+                <td>
+                    {% if element.family %}
+                    <span class="badge bg-info">{{ element.family }}</span>
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td class="text-muted">Group Name:</td>
+                <td>{{ element.group or '-' }}</td>
+            </tr>
+            <tr>
+                <td class="text-muted">MGE Type:</td>
+                <td>{{ element.mge_type or '-' }}</td>
+            </tr>
+            <tr>
+                <td class="text-muted">Host:</td>
+                <td>{{ element.host or '-' }}</td>
+            </tr>
+            <tr>
+                <td class="text-muted">Accession Number:</td>
+                <td>{{ element.accession_number or '-' }}</td>
+            </tr>
+            <tr>
+                <td class="text-muted">Status:</td>
+                <td>
+                    {% if element.status == 'approved' %}
+                    <span class="badge bg-success">
+                        <i class="fas fa-check me-1"></i>Approved
+                    </span>
+                    {% elif element.status == 'pending' %}
+                    <span class="badge bg-warning">
+                        <i class="fas fa-clock me-1"></i>Pending
+                    </span>
+                    {% elif element.status == 'rejected' %}
+                    <span class="badge bg-danger">
+                        <i class="fas fa-times me-1"></i>Rejected
+                    </span>
+                    {% else %}
+                    <span class="badge bg-secondary">{{ element.status }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="col-md-6">
+        <h6 class="text-primary mb-3">
+            <i class="fas fa-dna me-2"></i>ORF Information
+        </h6>
+        <table class="table table-sm table-borderless">
+            <tr>
+                <td class="text-muted" width="30%">IS Length:</td>
+                <td>
+                    {% if element.is_length %}
+                    <span class="badge bg-secondary">{{ element.is_length }} bp</span>
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td class="text-muted">Left Flank:</td>
+                <td>
+                    {% if element.left_flank %}
+                    <code class="small">{{ element.left_flank[:20] }}{% if element.left_flank|length > 20 %}...{% endif %}</code>
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td class="text-muted">Right Flank:</td>
+                <td>
+                    {% if element.right_flank %}
+                    <code class="small">{{ element.right_flank[:20] }}{% if element.right_flank|length > 20 %}...{% endif %}</code>
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td class="text-muted">LE Cleavage Site:</td>
+                <td>{{ element.le_cleavage_site or '-' }}</td>
+            </tr>
+            <tr>
+                <td class="text-muted">RE Cleavage Site:</td>
+                <td>{{ element.re_cleavage_site or '-' }}</td>
+            </tr>
+            <tr>
+                <td class="text-muted">ORF Number:</td>
+                <td>{{ element.orf_number or '-' }}</td>
+            </tr>
+            <tr>
+                <td class="text-muted">ORF:</td>
+                <td>{{ element.orf or '-' }}</td>
+            </tr>
+            <tr>
+                <td class="text-muted">Submission Date:</td>
+                <td>
+                    {% if element.submission_date %}
+                    <small class="text-muted">{{ element.submission_date.strftime('%Y-%m-%d %H:%M') }}</small>
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+{% if element.orf_function or element.comment or element.references %}
+<hr class="my-4">
+<div class="row">
+    {% if element.orf_function %}
+    <div class="col-12 mb-3">
+        <h6 class="text-primary mb-2">
+            <i class="fas fa-cogs me-2"></i>ORF Function
+        </h6>
+        <div class="bg-light p-3 rounded">
+            <p class="mb-0">{{ element.orf_function }}</p>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if element.comment %}
+    <div class="col-12 mb-3">
+        <h6 class="text-primary mb-2">
+            <i class="fas fa-comment me-2"></i>Notes
+        </h6>
+        <div class="bg-light p-3 rounded">
+            <p class="mb-0">{{ element.comment }}</p>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if element.references %}
+    <div class="col-12 mb-3">
+        <h6 class="text-primary mb-2">
+            <i class="fas fa-book me-2"></i>References
+        </h6>
+        <div class="bg-light p-3 rounded">
+            <p class="mb-0">{{ element.references }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if element.dna_sequence or element.orf_sequence %}
+<hr class="my-4">
+<div class="row">
+    {% if element.dna_sequence %}
+    <div class="col-12 mb-3">
+        <h6 class="text-primary mb-2">
+            <i class="fas fa-dna me-2"></i>DNA Sequence
+        </h6>
+        <div class="bg-dark text-light p-3 rounded" style="font-family: monospace; font-size: 0.9rem; max-height: 200px; overflow-y: auto;">
+            {% set sequence = element.dna_sequence %}
+            {% for i in range(0, sequence|length, 60) %}
+            <div>{{ sequence[i:i+60] }}</div>
+            {% endfor %}
+        </div>
+        <small class="text-muted">Length: {{ element.dna_sequence|length }} bp</small>
+    </div>
+    {% endif %}
+    
+    {% if element.orf_sequence %}
+    <div class="col-12 mb-3">
+        <h6 class="text-primary mb-2">
+            <i class="fas fa-code me-2"></i>ORF Sequence
+        </h6>
+        <div class="bg-dark text-light p-3 rounded" style="font-family: monospace; font-size: 0.9rem; max-height: 200px; overflow-y: auto;">
+            {% set sequence = element.orf_sequence %}
+            {% for i in range(0, sequence|length, 60) %}
+            <div>{{ sequence[i:i+60] }}</div>
+            {% endfor %}
+        </div>
+        <small class="text-muted">Length: {{ element.orf_sequence|length }} bp</small>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if element.submitter_first_name or element.submitter_last_name %}
+<hr class="my-4">
+<div class="row">
+    <div class="col-12">
+        <h6 class="text-primary mb-3">
+            <i class="fas fa-user me-2"></i>Submitter Information
+        </h6>
+        <table class="table table-sm table-borderless">
+            {% if element.submitter_first_name or element.submitter_last_name %}
+            <tr>
+                <td class="text-muted" width="20%">Name:</td>
+                <td>{{ element.submitter_first_name or '' }} {{ element.submitter_last_name or '' }}</td>
+            </tr>
+            {% endif %}
+            {% if element.submitter_institution %}
+            <tr>
+                <td class="text-muted">Institution:</td>
+                <td>{{ element.submitter_institution }}</td>
+            </tr>
+            {% endif %}
+            {% if element.submitter_email %}
+            <tr>
+                <td class="text-muted">Email:</td>
+                <td><a href="mailto:{{ element.submitter_email }}">{{ element.submitter_email }}</a></td>
+            </tr>
+            {% endif %}
+            {% if element.submitter_telephone %}
+            <tr>
+                <td class="text-muted">Telephone:</td>
+                <td>{{ element.submitter_telephone }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+</div>
+{% endif %}

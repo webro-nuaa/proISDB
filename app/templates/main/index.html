@@ -1,0 +1,356 @@
+{% extends "layout/base.html" %}
+
+{% block title %}proISDB - IS Element Database Homepage{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-gradient-primary text-white py-5 position-relative overflow-hidden">
+
+    
+    <div class="container position-relative">
+        <div class="row align-items-center min-vh-50">
+            <div class="col-lg-6">
+                <div class="hero-content">
+                    <h1 class="display-4 fw-bold mb-4 hero-title">
+                        <i class="fas fa-dna me-3 hero-icon"></i>proISDB
+                    </h1>
+                    <p class="lead mb-4 hero-subtitle">
+                        <strong>Insertion Sequences in Prokaryotes (proISDB)</strong> — a comprehensive database dedicated to prokaryotic insertion sequences, providing IS element data query, BLAST analysis, and research tools.
+                        <span class="highlight-text">Supporting bioinformatics research and exploring the mysteries of genome evolution.</span>
+                    </p>
+                
+                <!-- Quick Search -->
+                <div class="search-card bg-white text-dark p-4 mb-4 shadow-lg">
+                    <div class="mb-3">
+                        <h5 class="card-title mb-0 text-primary">
+                            <i class="fas fa-search me-2"></i>Quick Search
+                        </h5>
+                    </div>
+                    
+                    <!-- 搜索表单 -->
+                    <form action="{{ url_for('search.index') }}" method="GET" class="row g-2">
+                        <div class="col-md-10">
+                            <input type="text" name="query" class="form-control form-control-lg" 
+                                   placeholder="Enter IS element name, host, function and other keywords for full-field search..."
+                                   value="{{ request.args.get('query', '') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary btn-lg w-100 search-btn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="d-flex flex-wrap gap-3 justify-content-center">
+                    <a href="{{ url_for('search.index') }}" class="btn btn-light btn-lg action-btn px-5" onclick="clearSearchParams()">
+                        <i class="fas fa-search me-2"></i>Start Exploring
+                    </a>
+                </div>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="hero-image mt-4 mt-lg-0">
+                    <div class="science-visual">
+                        <div class="molecule-container">
+                            <i class="fas fa-microscope fa-8x hero-main-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h2 class="display-6 fw-bold text-dark mb-4">About proISDB</h2>
+                <p class="lead text-muted mb-4">
+                    proISDB is a professional IS element (insertion sequence) database platform dedicated to providing accurate and comprehensive transposon data query services for bioinformatics researchers.
+                </p>
+                <div class="row mt-5">
+                    <div class="col-md-4 mb-4">
+                        <div class="feature-card text-center p-4">
+                            <i class="fas fa-database fa-3x text-primary mb-3"></i>
+                            <h5 class="fw-bold">Rich Data</h5>
+                            <p class="text-muted">Covers various IS element types and host information</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="feature-card text-center p-4">
+                            <i class="fas fa-search fa-3x text-success mb-3"></i>
+                            <h5 class="fw-bold">Convenient Search</h5>
+                            <p class="text-muted">Supports multi-dimensional fast and accurate search</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="feature-card text-center p-4">
+                            <i class="fas fa-microscope fa-3x text-info mb-3"></i>
+                            <h5 class="fw-bold">Professional Authority</h5>
+                            <p class="text-muted">Continuously updated based on latest research achievements</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+{% endblock %}
+
+{% block extra_css %}
+<!-- AOS Animation Library - removed -->
+<!-- <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet"> -->
+
+<style>
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 80vh;
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+}
+
+.min-vh-50 {
+    min-height: 50vh;
+}
+
+/* Hero Content */
+.hero-title {
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    background: linear-gradient(45deg, #fff, #f8f9fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-icon {
+    /* animation removed */
+}
+
+.hero-subtitle {
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+.highlight-text {
+    background: linear-gradient(45deg, #ffd700, #ffed4e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+}
+
+/* Search Card */
+.search-card {
+    border-radius: 20px !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: all 0.3s ease;
+}
+
+.search-card.search-focused {
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
+    transform: translateY(-2px);
+}
+
+.search-btn {
+    border-radius: 10px !important;
+    transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.form-control-lg:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Action Buttons */
+.action-btn {
+    border-radius: 25px !important;
+    padding: 10px 25px !important;
+    border: 2px solid rgba(255,255,255,0.3) !important;
+    backdrop-filter: blur(5px);
+}
+
+/* Hero Visual */
+.science-visual {
+    position: relative;
+}
+
+.molecule-container {
+    position: relative;
+    display: inline-block;
+}
+
+.hero-main-icon {
+    color: rgba(255,255,255,0.8);
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+}
+
+/* floating elements styles removed */
+
+/* floating animations removed */
+
+/* Background animations removed */
+
+/* Statistics Cards */
+.stat-card {
+    border-radius: 20px !important;
+    background: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.stat-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+    position: relative;
+}
+
+.stat-icon {
+    font-size: 2.5rem !important;
+}
+
+.stat-progress {
+    width: 100%;
+    height: 4px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 15px;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 80%;
+    border-radius: 2px;
+}
+
+/* Content Cards */
+.content-card {
+    border-radius: 15px !important;
+    overflow: hidden;
+}
+
+.content-card .card-header {
+    border-radius: 15px 15px 0 0 !important;
+    border: none;
+}
+
+/* List Items */
+.list-group-item {
+    border: none !important;
+    border-radius: 10px !important;
+    margin-bottom: 5px;
+}
+
+/* Feature Cards */
+.feature-card {
+    border-radius: 15px;
+    background: white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+/* 按钮样式增强 */
+.action-btn {
+    border-radius: 50px !important;
+    padding: 1rem 2.5rem !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    color: #667eea !important;
+    border: 2px solid rgba(255,255,255,0.9);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 2.5rem;
+    }
+    
+    .hero-section {
+        min-height: 70vh;
+    }
+    
+    .hero-main-icon {
+        font-size: 4rem !important;
+    }
+    
+    .floating-elements {
+        display: none;
+    }
+    
+    .action-btn {
+        margin-bottom: 10px;
+        padding: 0.8rem 2rem !important;
+    }
+    
+    .feature-card {
+        margin-bottom: 2rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- AOS Animation Library JS - removed -->
+<!-- <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script> -->
+
+<script>
+$(document).ready(function() {
+    // 首页搜索功能初始化
+    console.log('首页搜索功能已初始化');
+    
+    // 搜索框聚焦效果
+    $('input[name="query"]').focus(function() {
+        $(this).parent().parent().addClass('search-focused');
+    }).blur(function() {
+        $(this).parent().parent().removeClass('search-focused');
+    });
+});
+
+// 清除搜索参数
+function clearSearchParams() {
+    // 这个函数可以确保链接是干净的，不带参数
+    return true;
+}
+</script>
+{% endblock %}

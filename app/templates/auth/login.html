@@ -1,0 +1,141 @@
+{% extends "layout/base.html" %}
+
+{% block title %}User Login - proISDB{% endblock %}
+
+{% block extra_css %}
+<style>
+.auth-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    padding: 40px;
+    text-align: center;
+}
+
+.auth-header h1 {
+    margin-bottom: 20px;
+}
+
+.auth-header .lead {
+    margin-bottom: 25px;
+    opacity: 0.9;
+}
+
+.auth-icon {
+    opacity: 0.8;
+    margin-top: 20px;
+}
+
+.auth-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+}
+
+.auth-card .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 15px 15px 0 0;
+    padding: 1.5rem;
+}
+
+.auth-card .card-body {
+    padding: 2rem;
+}
+
+.form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 25px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Auth Header -->
+    <div class="auth-header">
+        <h1>
+            <i class="fas fa-sign-in-alt me-3"></i>User Login
+        </h1>
+        <p class="lead">Access your proISDB account to manage data and submissions</p>
+        <div class="auth-icon">
+            <i class="fas fa-user-lock fa-4x"></i>
+        </div>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card auth-card">
+                <div class="card-header text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login Form
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.username.label(class="form-label") }}
+                            {{ form.username(class="form-control") }}
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.username.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.password.label(class="form-label") }}
+                            {{ form.password(class="form-control") }}
+                            {% if form.password.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.password.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.remember_me(class="form-check-input") }}
+                            {{ form.remember_me.label(class="form-check-label") }}
+                        </div>
+                        
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

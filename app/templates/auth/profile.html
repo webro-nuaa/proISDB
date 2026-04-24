@@ -1,0 +1,137 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}Profile - proISDB{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-user-circle me-2"></i>My Profile
+                </h2>
+                <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-xl-8 col-lg-10 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>User Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Username</label>
+                            <div class="fw-bold">{{ user.username }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Email</label>
+                            <div class="fw-bold">
+                                {% if user.email %}
+                                    <i class="fas fa-check-circle text-success me-1"></i>{{ user.email }}
+                                {% else %}
+                                    <span class="text-muted">Not set</span>
+                                    <span class="badge bg-info text-dark ms-2">Recommended</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">First Name</label>
+                            <div class="fw-bold">{{ user.first_name or 'Not set' }}
+                            {% if not user.first_name %}
+                                <span class="badge bg-warning text-dark ms-2">Required</span>
+                            {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Last Name</label>
+                            <div class="fw-bold">{{ user.last_name or 'Not set' }}
+                            {% if not user.last_name %}
+                                <span class="badge bg-warning text-dark ms-2">Required</span>
+                            {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Institution</label>
+                            <div class="fw-bold">{{ user.institution or 'Not set' }}
+                            {% if not user.institution %}
+                                <span class="badge bg-warning text-dark ms-2">Required</span>
+                            {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Department</label>
+                            <div class="fw-bold">{{ user.department or 'Not set' }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Country</label>
+                            <div class="fw-bold">{{ user.country or 'Not set' }}
+                            {% if not user.country %}
+                                <span class="badge bg-warning text-dark ms-2">Required</span>
+                            {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Telephone</label>
+                            <div class="fw-bold">{{ user.telephone or 'Not set' }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Role</label>
+                            <div>
+                                <span class="badge bg-{{ 'success' if user.is_admin() else 'secondary' }} fs-6">
+                                    {{ 'Administrator' if user.is_admin() else 'User' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Account Status</label>
+                            <div>
+                                <span class="badge bg-{{ 'success' if user.is_active else 'danger' }} fs-6">
+                                    {{ 'Active' if user.is_active else 'Inactive' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Registered At</label>
+                            <div class="fw-bold">{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else 'N/A' }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Last Login</label>
+                            <div class="fw-bold">{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'First login' }}</div>
+                        </div>
+                    </div>
+                    
+                    {% if not user.first_name or not user.last_name or not user.institution or not user.country %}
+                    <div class="alert alert-warning mt-4 mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Profile Incomplete!</strong> Please complete your profile information (First Name, Last Name, Institution, and Country) to submit IS elements.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i>Edit Profile
+                        </a>
+                        <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-key me-2"></i>Change Password
+                        </a>
+                        <a href="{{ url_for('auth.verify_email') }}" class="btn btn-outline-info">
+                            <i class="fas fa-envelope-open-text me-2"></i>
+                            {% if user.email %}Verify New Email{% else %}Add & Verify Email{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

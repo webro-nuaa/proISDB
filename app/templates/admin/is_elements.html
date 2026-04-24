@@ -1,0 +1,1050 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}IS Element Data Management - proISDB{% endblock %}
+
+{% block extra_css %}
+<style>
+.batch-toolbar {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #dee2e6;
+    padding: 15px 0;
+    margin-bottom: 20px;
+}
+
+.batch-toolbar.show {
+    display: block;
+}
+
+.table-actions {
+    min-width: 140px;
+}
+
+.table tbody tr.selected {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+.select-all-row {
+    background-color: #f8f9fa;
+    font-weight: 500;
+}
+
+.stat-card {
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.search-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.search-card .form-label {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+.search-card .form-control,
+.search-card .form-select {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+}
+
+.pagination-info {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Title -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>
+                        <i class="fas fa-database me-2"></i>IS Element Data Management
+                    </h2>
+                    <p class="text-muted mb-0">Manage and maintain IS element database</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('admin.add_is_element') }}" class="btn btn-outline-success">
+                        <i class="fas fa-plus me-2"></i>Add IS Element
+                    </a>
+                    <a href="{{ url_for('admin.import_is_elements') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-file-import me-2"></i>Batch Import
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch toolbar -->
+    <div class="batch-toolbar" id="batchToolbar">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="fw-bold">Selected <span id="selectedCount">0</span> items</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-success btn-sm" onclick="batchApprove()">
+                        <i class="fas fa-check me-1"></i>Batch Approve
+                    </button>
+                    <button type="button" class="btn btn-warning btn-sm" onclick="batchPending()">
+                        <i class="fas fa-clock me-1"></i>Batch Pending
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="batchReject()">
+                        <i class="fas fa-times me-1"></i>Batch Reject
+                    </button>
+                    <div class="vr"></div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="fas fa-download me-1"></i>Export Selected
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="batchExport('csv'); return false;">
+                                <i class="fas fa-table me-2"></i>Export as CSV
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="batchExport('fasta'); return false;">
+                                <i class="fas fa-dna me-2"></i>Export as FASTA
+                            </a></li>
+                        </ul>
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="batchDelete()">
+                        <i class="fas fa-trash me-1"></i>Batch Delete
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                        <i class="fas fa-times me-1"></i>Cancel Selection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card search-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="card-title mb-0 text-white">
+                            <i class="fas fa-search me-2"></i>
+                            <span id="search-title">{{ 'Advanced Search' if is_advanced else 'Quick Search' }}</span>
+                        </h5>
+                        <button type="button" class="btn btn-outline-light btn-sm" onclick="toggleSearchMode()">
+                            <i class="fas fa-cog me-1"></i>
+                            <span id="toggle-search-text">{{ 'Simple Search' if is_advanced else 'Advanced Search' }}</span>
+                        </button>
+                    </div>
+                    
+                    <!-- 简单搜索表单 -->
+                    <form id="simple-search-form" method="GET" {% if is_advanced %}class="d-none"{% endif %}>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-2">
+                                <label class="form-label">Status Filter</label>
+                                <select name="status" class="form-select">
+                                    <option value="">All Status</option>
+                                    <option value="approved" {{ 'selected' if current_status == 'approved' }}>Approved</option>
+                                    <option value="pending" {{ 'selected' if current_status == 'pending' }}>Pending</option>
+                                    <option value="rejected" {{ 'selected' if current_status == 'rejected' }}>Rejected</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Per Page</label>
+                                <select name="per_page" class="form-select">
+                                    <option value="10" {{ 'selected' if per_page == 10 }}>10</option>
+                                    <option value="20" {{ 'selected' if per_page == 20 }}>20</option>
+                                    <option value="50" {{ 'selected' if per_page == 50 }}>50</option>
+                                    <option value="100" {{ 'selected' if per_page == 100 }}>100</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Keywords</label>
+                                <input type="text" name="search" class="form-control" 
+                                       placeholder="Search IS name, family, host..." 
+                                       value="{{ current_search }}">
+                            </div>
+                            <div class="col-md-2">
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-light">
+                                        <i class="fas fa-search me-2"></i>Search
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- 高级搜索表单 -->
+                    <form id="advanced-search-form" method="GET" {% if not is_advanced %}class="d-none" style="display: none !important;"{% endif %}>
+                        <input type="hidden" name="advanced" value="1">
+                        <div class="row g-3">
+                            <!-- IS Name -->
+                            <div class="col-md-4">
+                                <label class="form-label">IS Name</label>
+                                <input type="text" name="name" class="form-control" 
+                                       placeholder="e.g., IS1, IS5..." 
+                                       value="{{ search_params.get('name', '') }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Match</label>
+                                <select name="name_match" class="form-select">
+                                    <option value="contains" {% if search_params.get('name_match', 'contains') == 'contains' %}selected{% endif %}>Contains</option>
+                                    <option value="begin_with" {% if search_params.get('name_match') == 'begin_with' %}selected{% endif %}>Starts With</option>
+                                    <option value="end_with" {% if search_params.get('name_match') == 'end_with' %}selected{% endif %}>Ends With</option>
+                                    <option value="equal_to" {% if search_params.get('name_match') == 'equal_to' %}selected{% endif %}>Equals</option>
+                                </select>
+                            </div>
+                            
+                            <!-- IS Family -->
+                            <div class="col-md-4">
+                                <label class="form-label">IS Family</label>
+                                <input type="text" name="family_field" class="form-control" 
+                                       placeholder="e.g., IS1, IS5, IS21..." 
+                                       value="{{ search_params.get('family_field', '') }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Match</label>
+                                <select name="family_match" class="form-select">
+                                    <option value="contains" {% if search_params.get('family_match', 'contains') == 'contains' %}selected{% endif %}>Contains</option>
+                                    <option value="begin_with" {% if search_params.get('family_match') == 'begin_with' %}selected{% endif %}>Starts With</option>
+                                    <option value="end_with" {% if search_params.get('family_match') == 'end_with' %}selected{% endif %}>Ends With</option>
+                                    <option value="equal_to" {% if search_params.get('family_match') == 'equal_to' %}selected{% endif %}>Equals</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Origin -->
+                            <div class="col-md-4">
+                                <label class="form-label">Origin</label>
+                                <input type="text" name="origin" class="form-control" 
+                                       placeholder="e.g., plasmid, chromosome..." 
+                                       value="{{ search_params.get('origin', '') }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Match</label>
+                                <select name="origin_match" class="form-select">
+                                    <option value="contains" {% if search_params.get('origin_match', 'contains') == 'contains' %}selected{% endif %}>Contains</option>
+                                    <option value="begin_with" {% if search_params.get('origin_match') == 'begin_with' %}selected{% endif %}>Starts With</option>
+                                    <option value="end_with" {% if search_params.get('origin_match') == 'end_with' %}selected{% endif %}>Ends With</option>
+                                    <option value="equal_to" {% if search_params.get('origin_match') == 'equal_to' %}selected{% endif %}>Equals</option>
+                                </select>
+                            </div>
+                            
+                            <!-- MGE Type -->
+                            <div class="col-md-4">
+                                <label class="form-label">MGE Type</label>
+                                <input type="text" name="mge_type" class="form-control" 
+                                       placeholder="e.g., IS, MITE, MIC..." 
+                                       value="{{ search_params.get('mge_type', '') }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Match</label>
+                                <select name="mge_type_match" class="form-select">
+                                    <option value="contains" {% if search_params.get('mge_type_match', 'contains') == 'contains' %}selected{% endif %}>Contains</option>
+                                    <option value="begin_with" {% if search_params.get('mge_type_match') == 'begin_with' %}selected{% endif %}>Starts With</option>
+                                    <option value="end_with" {% if search_params.get('mge_type_match') == 'end_with' %}selected{% endif %}>Ends With</option>
+                                    <option value="equal_to" {% if search_params.get('mge_type_match') == 'equal_to' %}selected{% endif %}>Equals</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Host -->
+                            <div class="col-md-6">
+                                <label class="form-label">Host</label>
+                                <input type="text" name="host" class="form-control" 
+                                       placeholder="e.g., Escherichia coli..." 
+                                       value="{{ search_params.get('host', '') }}">
+                            </div>
+                            
+                            <!-- Accession -->
+                            <div class="col-md-6">
+                                <label class="form-label">Accession</label>
+                                <input type="text" name="accession" class="form-control" 
+                                       placeholder="e.g., NC_000913..." 
+                                       value="{{ search_params.get('accession', '') }}">
+                            </div>
+                            
+                            <!-- Status -->
+                            <div class="col-md-3">
+                                <label class="form-label">Status</label>
+                                <select name="status" class="form-select">
+                                    <option value="" {{ 'selected' if not search_params.get('status') }}>All Status</option>
+                                    <option value="approved" {{ 'selected' if search_params.get('status') == 'approved' }}>Approved</option>
+                                    <option value="pending" {{ 'selected' if search_params.get('status') == 'pending' }}>Pending</option>
+                                    <option value="rejected" {{ 'selected' if search_params.get('status') == 'rejected' }}>Rejected</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Per Page -->
+                            <div class="col-md-3">
+                                <label class="form-label">Per Page</label>
+                                <select name="per_page" class="form-select">
+                                    <option value="10" {{ 'selected' if per_page == 10 }}>10</option>
+                                    <option value="20" {{ 'selected' if per_page == 20 }}>20</option>
+                                    <option value="50" {{ 'selected' if per_page == 50 }}>50</option>
+                                    <option value="100" {{ 'selected' if per_page == 100 }}>100</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional fields -->
+                        <div class="mt-4">
+                            <h6 class="text-white mb-3 fw-bold">
+                                <i class="fas fa-plus-circle me-2"></i>Additional fields
+                            </h6>
+                            <div class="p-3 bg-white bg-opacity-10 rounded">
+                                <div class="row g-3">
+                                    <!-- Length -->
+                                    <div class="col-md-4">
+                                        <label class="form-label">Length (protein length)</label>
+                                        <input type="number" name="length_field" class="form-control" 
+                                               placeholder="e.g., 300" min="0" step="1"
+                                               value="{{ search_params.get('length_field', '') }}">
+                                        <div class="form-text text-white-50 small">Search ORF-encoded protein amino acid length in aa</div>
+                                        <div class="invalid-feedback">Please enter a valid number</div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Match</label>
+                                        <select name="length_match" class="form-select">
+                                            <option value="equal_to" {% if search_params.get('length_match', 'equal_to') == 'equal_to' %}selected{% endif %}>Equals</option>
+                                            <option value="gte" {% if search_params.get('length_match') == 'gte' %}selected{% endif %}>Greater or Equal</option>
+                                            <option value="lte" {% if search_params.get('length_match') == 'lte' %}selected{% endif %}>Less or Equal</option>
+                                        </select>
+                                    </div>
+                                            <option value="lte" {% if search_params.get('length_match') == 'lte' %}selected{% endif %}>Less or Equal</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 高级搜索按钮 -->
+                        <div class="row g-3 mt-3" id="advanced-search-buttons" {% if not is_advanced %}style="display: none;"{% endif %}>
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <button type="submit" class="btn btn-light btn-lg">
+                                        <i class="fas fa-search me-2"></i>Search
+                                    </button>
+                                    <button type="button" class="btn btn-outline-light btn-lg ms-2" onclick="clearAdvancedForm()">
+                                        <i class="fas fa-times me-2"></i>Clear
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm stat-card">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-database fa-2x text-primary me-3"></i>
+                        <div>
+                            <h3 class="text-primary mb-0">{{ elements.total }}</h3>
+                            <p class="text-muted mb-0 small">Total Records</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm stat-card">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-check-circle fa-2x text-success me-3"></i>
+                        <div>
+                            <h3 class="text-success mb-0">{{ stats.approved }}</h3>
+                            <p class="text-muted mb-0 small">Approved</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm stat-card">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-clock fa-2x text-warning me-3"></i>
+                        <div>
+                            <h3 class="text-warning mb-0">{{ stats.pending }}</h3>
+                            <p class="text-muted mb-0 small">Pending</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm stat-card">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-times-circle fa-2x text-danger me-3"></i>
+                        <div>
+                            <h3 class="text-danger mb-0">{{ stats.rejected }}</h3>
+                            <p class="text-muted mb-0 small">Rejected</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IS list -->
+    {% if elements.items %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>IS Elements List
+                        </h5>
+                        <div class="pagination-info">
+                            Showing {{ (elements.page - 1) * elements.per_page + 1 }} - {{ elements.page * elements.per_page if elements.page * elements.per_page < elements.total else elements.total }}, total {{ elements.total }} records
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr class="select-all-row">
+                                    <th width="3%">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAll">
+                                            <label class="form-check-label" for="selectAll"></label>
+                                        </div>
+                                    </th>
+                                    <th width="6%">ID</th>
+                                    <th width="15%">Name</th>
+                                    <th width="12%">Family</th>
+                                    <th width="15%">Host</th>
+                                    <th width="8%">Length</th>
+                                    <th width="10%">Status</th>
+                                    <th width="12%">Submitted At</th>
+                                    <th width="19%" class="table-actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for element in elements.items %}
+                                <tr data-id="{{ element.id }}">
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input row-checkbox" type="checkbox" 
+                                                   value="{{ element.id }}" id="check{{ element.id }}">
+                                            <label class="form-check-label" for="check{{ element.id }}"></label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ element.id }}</span>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong>{{ element.name }}</strong>
+                                            {% if element.group %}
+                                            <br><small class="text-muted">Group: {{ element.group }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ element.family or '-' }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 150px;" title="{{ element.host or '-' }}">
+                                            {{ element.host or '-' }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if element.is_length %}
+                                        <span class="badge bg-secondary">{{ element.is_length }} bp</span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if element.status == 'approved' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Approved
+                                        </span>
+                                        {% elif element.status == 'pending' %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock me-1"></i>Pending
+                                        </span>
+                                        {% elif element.status == 'rejected' %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times me-1"></i>Rejected
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ element.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if element.submission_date %}
+                                        <small class="text-muted">{{ element.submission_date.strftime('%Y-%m-%d') }}</small>
+                                        {% else %}
+                                        <small class="text-muted">-</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <!-- View detail -->
+                                            <a href="{{ url_for('admin.is_element_view', id=element.id) }}" 
+                                               class="btn btn-outline-info" title="View Detail">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            
+                                            <!-- Edit -->
+                                            <a href="{{ url_for('admin.edit_is_element', id=element.id) }}" 
+                                               class="btn btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            
+                                            <!-- Quick status toggle -->
+                                            {% if element.status == 'pending' %}
+                                            <button type="button" class="btn btn-outline-success" 
+                                                    onclick="quickApprove('{{ element.id }}')" title="Quick Approve">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            {% elif element.status == 'approved' %}
+                                            <button type="button" class="btn btn-outline-warning" 
+                                                    onclick="quickPending('{{ element.id }}')" title="Set Pending">
+                                                <i class="fas fa-clock"></i>
+                                            </button>
+                                            {% endif %}
+                                            
+                                            <!-- Delete -->
+                                            <button type="button" class="btn btn-outline-danger" 
+                                                    onclick="deleteElement('{{ element.id }}', '{{ element.name }}')" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if elements.pages > 1 %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="IS pagination">
+                <ul class="pagination justify-content-center">
+                    <!-- First -->
+                    {% if elements.page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.is_elements', page=1, search=current_search, status=current_status, family=current_family, per_page=per_page) }}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Prev -->
+                    {% if elements.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.is_elements', page=elements.prev_num, search=current_search, status=current_status, family=current_family, per_page=per_page) }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Pages -->
+                    {% for page_num in elements.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            {% if page_num != elements.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.is_elements', page=page_num, search=current_search, status=current_status, family=current_family, per_page=per_page) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Next -->
+                    {% if elements.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.is_elements', page=elements.next_num, search=current_search, status=current_status, family=current_family, per_page=per_page) }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Last -->
+                    {% if elements.page < elements.pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.is_elements', page=elements.pages, search=current_search, status=current_status, family=current_family, per_page=per_page) }}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty state -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No IS elements found</h5>
+                    <p class="text-muted">Try adjusting filters or add a new IS element</p>
+                    <a href="{{ url_for('admin.add_is_element') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add IS Element
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- View modal -->
+<div class="modal fade" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye me-2"></i>IS Element Detail
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="viewContent">
+                    <!-- Detail via JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure to delete IS element "<span id="deleteElementName"></span>"?</p>
+                <p class="text-danger"><strong>This action cannot be undone!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    {{ delete_form.hidden_tag() }}
+                    <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Batch modal -->
+<div class="modal fade" id="batchModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-tasks me-2"></i>Batch Action Confirm
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="batchMessage"></p>
+                <div id="batchComment" style="display: none;">
+                    <label class="form-label">Comment:</label>
+                    <textarea class="form-control" rows="3" placeholder="Optional comment..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmBatchAction">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Full-select
+    $('#selectAll').on('change', function() {
+        const isChecked = $(this).prop('checked');
+        $('.row-checkbox').prop('checked', isChecked);
+        $('.row-checkbox').each(function() {
+            const row = $(this).closest('tr');
+            if (isChecked) {
+                row.addClass('selected');
+            } else {
+                row.removeClass('selected');
+            }
+        });
+        updateBatchToolbar();
+    });
+    
+    // Row select
+    $('.row-checkbox').on('change', function() {
+        const row = $(this).closest('tr');
+        if ($(this).prop('checked')) {
+            row.addClass('selected');
+        } else {
+            row.removeClass('selected');
+        }
+        
+        // Update select all state
+        const totalRows = $('.row-checkbox').length;
+        const checkedRows = $('.row-checkbox:checked').length;
+        $('#selectAll').prop('checked', checkedRows === totalRows);
+        $('#selectAll').prop('indeterminate', checkedRows > 0 && checkedRows < totalRows);
+        
+        updateBatchToolbar();
+    });
+    
+    // Row click select
+    $('tbody tr').on('click', function(e) {
+        if (e.target.type === 'checkbox' || e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.tagName === 'I') {
+            return;
+        }
+        const checkbox = $(this).find('.row-checkbox');
+        checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
+    });
+});
+
+// Update toolbar
+function updateBatchToolbar() {
+    const selectedCount = $('.row-checkbox:checked').length;
+    $('#selectedCount').text(selectedCount);
+    
+    if (selectedCount > 0) {
+        $('#batchToolbar').addClass('show');
+    } else {
+        $('#batchToolbar').removeClass('show');
+    }
+}
+
+// Clear selection
+function clearSelection() {
+    $('.row-checkbox').prop('checked', false);
+    $('#selectAll').prop('checked', false).prop('indeterminate', false);
+    $('tbody tr').removeClass('selected');
+    updateBatchToolbar();
+}
+
+// Get selected IDs
+function getSelectedIds() {
+    return $('.row-checkbox:checked').map(function() {
+        return $(this).val();
+    }).get();
+}
+
+// Batch actions
+function batchApprove() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return;
+    
+    $('#batchMessage').text(`Confirm to set ${ids.length} IS elements to "Approved"?`);
+    $('#batchComment').show();
+    $('#confirmBatchAction').off('click').on('click', function() {
+        performBatchAction('approve', ids);
+    });
+    new bootstrap.Modal(document.getElementById('batchModal')).show();
+}
+
+function batchPending() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return;
+    
+    $('#batchMessage').text(`Confirm to set ${ids.length} IS elements to "Pending"?`);
+    $('#batchComment').show();
+    $('#confirmBatchAction').off('click').on('click', function() {
+        performBatchAction('pending', ids);
+    });
+    new bootstrap.Modal(document.getElementById('batchModal')).show();
+}
+
+function batchReject() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return;
+    
+    $('#batchMessage').text(`Confirm to set ${ids.length} IS elements to "Rejected"?`);
+    $('#batchComment').show();
+    $('#confirmBatchAction').off('click').on('click', function() {
+        performBatchAction('reject', ids);
+    });
+    new bootstrap.Modal(document.getElementById('batchModal')).show();
+}
+
+function batchDelete() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return;
+    
+    $('#batchMessage').html(`<p class="text-danger"><strong>Confirm to delete ${ids.length} IS elements?</strong></p><p class="text-danger">This action cannot be undone!</p>`);
+    $('#batchComment').hide();
+    $('#confirmBatchAction').off('click').on('click', function() {
+        performBatchAction('delete', ids);
+    });
+    new bootstrap.Modal(document.getElementById('batchModal')).show();
+}
+
+function batchExport(format) {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return;
+    
+    // Create hidden form for export request
+    const form = $('<form>', {
+        method: 'POST',
+        action: '{{ url_for("admin.batch_export") }}'
+    });
+    
+    // Add CSRF token
+    form.append($('<input>', {
+        type: 'hidden',
+        name: 'csrf_token',
+        value: '{{ csrf_token() }}'
+    }));
+    
+    // Add format
+    form.append($('<input>', {
+        type: 'hidden',
+        name: 'format',
+        value: format || 'csv'
+    }));
+    
+    // Add selected IDs
+    ids.forEach(function(id) {
+        form.append($('<input>', {
+            type: 'hidden',
+            name: 'ids',
+            value: id
+        }));
+    });
+    
+    $('body').append(form);
+    form.submit();
+    form.remove();
+}
+
+// Perform batch action
+function performBatchAction(action, ids) {
+    const comment = $('#batchComment textarea').val();
+    
+    // Build data object
+    const data = {
+        action: action,
+        comment: comment,
+        csrf_token: '{{ csrf_token() }}'
+    };
+    
+    // Add all IDs
+    ids.forEach(function(id, index) {
+        data['ids[' + index + ']'] = id;
+    });
+    
+    console.log('Request data:', data);
+    
+    $.ajax({
+        url: '{{ url_for("admin.batch_action") }}',
+        method: 'POST',
+        data: data,
+        dataType: 'json',
+        success: function(response) {
+            console.log('Response:', response);
+            if (response.success) {
+                alert('Success: ' + response.message);
+                location.reload();
+            } else {
+                alert('Failed: ' + response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX error:', xhr.status, xhr.responseText);
+            alert('Operation failed. Status: ' + xhr.status);
+        }
+    });
+    
+    bootstrap.Modal.getInstance(document.getElementById('batchModal')).hide();
+}
+
+// Quick switches
+function quickApprove(id) {
+    if (confirm('Approve this IS element?')) {
+        performBatchAction('approve', [id]);
+    }
+}
+
+function quickPending(id) {
+    if (confirm('Set this IS element to pending?')) {
+        performBatchAction('pending', [id]);
+    }
+}
+
+// View detail
+function viewElement(id) {
+    const modal = new bootstrap.Modal(document.getElementById('viewModal'));
+    const content = document.getElementById('viewContent');
+    
+    // Show loading state
+    content.innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+            <p class="mt-2">Loading...</p>
+        </div>
+    `;
+    
+    modal.show();
+    
+    // Get detail via AJAX
+    $.get('{{ url_for("admin.view_is_element", id=0) }}'.replace('0', id))
+        .done(function(data) {
+            content.innerHTML = data;
+        })
+        .fail(function() {
+            content.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Failed to load. Please try again later.
+                </div>
+            `;
+        });
+}
+
+// Delete single element
+function deleteElement(id, name) {
+    document.getElementById('deleteElementName').textContent = name;
+    document.getElementById('deleteForm').action = `/admin/is-element/${id}/delete`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+// Hover effects
+$(document).ready(function() {
+    $('tbody tr').hover(
+        function() {
+            $(this).find('.btn-group').addClass('shadow-sm');
+        },
+        function() {
+            $(this).find('.btn-group').removeClass('shadow-sm');
+        }
+    );
+});
+
+// Search mode toggle
+function toggleSearchMode() {
+    const simpleForm = document.getElementById('simple-search-form');
+    const advancedForm = document.getElementById('advanced-search-form');
+    const advancedButtons = document.getElementById('advanced-search-buttons');
+    const searchTitle = document.getElementById('search-title');
+    const toggleText = document.getElementById('toggle-search-text');
+    
+    if (simpleForm.classList.contains('d-none')) {
+        // Switch to simple mode
+        simpleForm.classList.remove('d-none');
+        advancedForm.classList.add('d-none');
+        advancedForm.style.display = 'none';
+        if (advancedButtons) advancedButtons.style.display = 'none';
+        searchTitle.textContent = 'Quick Search';
+        toggleText.textContent = 'Advanced Search';
+    } else {
+        // Switch to advanced mode
+        simpleForm.classList.add('d-none');
+        advancedForm.classList.remove('d-none');
+        advancedForm.style.display = 'block';
+        if (advancedButtons) advancedButtons.style.display = 'block';
+        searchTitle.textContent = 'Advanced Search';
+        toggleText.textContent = 'Simple Search';
+    }
+}
+
+// Clear advanced form
+function clearAdvancedForm() {
+    const form = document.getElementById('advanced-search-form');
+    const inputs = form.querySelectorAll('input[type="text"], input[type="number"]');
+    const selects = form.querySelectorAll('select');
+    
+    inputs.forEach(input => {
+        if (input.name !== 'advanced' && input.name !== 'per_page') {
+            input.value = '';
+        }
+    });
+    
+    selects.forEach(select => {
+        if (select.name !== 'per_page') {
+            select.selectedIndex = 0;
+        }
+    });
+}
+
+// 表单验证
+document.addEventListener('DOMContentLoaded', function() {
+    const advancedForm = document.getElementById('advanced-search-form');
+    if (advancedForm) {
+        advancedForm.addEventListener('submit', function(e) {
+            const lengthField = document.querySelector('input[name="length_field"]');
+            if (lengthField && lengthField.value) {
+                const lengthValue = lengthField.value.trim();
+                if (lengthValue && !/^\d+$/.test(lengthValue)) {
+                    e.preventDefault();
+                    lengthField.classList.add('is-invalid');
+                    alert('Length field must be a valid positive number');
+                    return false;
+                } else {
+                    lengthField.classList.remove('is-invalid');
+                }
+            }
+        });
+        
+        // 实时验证
+        const lengthField = document.querySelector('input[name="length_field"]');
+        if (lengthField) {
+            lengthField.addEventListener('input', function() {
+                const value = this.value.trim();
+                if (value && !/^\d+$/.test(value)) {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        }
+    }
+});
+</script>
+{% endblock %}

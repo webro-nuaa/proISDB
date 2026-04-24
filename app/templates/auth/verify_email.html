@@ -1,0 +1,183 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Email Verification - proISDB{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-envelope-open-text me-2"></i>Email Verification
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- 说明信息 -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Why verify your email?</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Secure your account with a verified email address</li>
+                            <li>Enable password recovery in case you forget your password</li>
+                            <li>Receive important notifications about your account</li>
+                        </ul>
+                    </div>
+
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <!-- 当前邮箱状态 -->
+                    <div class="mb-4 p-3 border rounded bg-light">
+                        <h6 class="mb-2"><i class="fas fa-user me-2"></i>Current Account</h6>
+                        <p class="mb-1"><strong>Username:</strong> {{ current_user.username }}</p>
+                        <p class="mb-0">
+                            <strong>Email:</strong> 
+                            {% if current_user.email %}
+                                <span class="text-success">
+                                    <i class="fas fa-check-circle"></i> {{ current_user.email }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">
+                                    <i class="fas fa-times-circle"></i> Not set
+                                </span>
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <hr>
+
+                    <!-- 步骤1: 发送验证码 -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">
+                            <span class="badge bg-primary me-2">Step 1</span>
+                            Enter Your Email
+                        </h5>
+                        <form method="POST" id="sendForm">
+                            {{ send_form.hidden_tag() }}
+                            <input type="hidden" name="action" value="send">
+                            
+                            <div class="mb-3">
+                                {{ send_form.email.label(class="form-label") }}
+                                {{ send_form.email(class="form-control form-control-lg", 
+                                    placeholder="your.email@example.com",
+                                    id="email-input") }}
+                                {% if send_form.email.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in send_form.email.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    We'll send a 6-digit verification code to this email address.
+                                </small>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-lg w-100" id="sendBtn">
+                                <i class="fas fa-paper-plane me-2"></i>Send Verification Code
+                            </button>
+                        </form>
+                    </div>
+
+                    <hr>
+
+                    <!-- 步骤2: 验证验证码 -->
+                    <div>
+                        <h5 class="mb-3">
+                            <span class="badge bg-success me-2">Step 2</span>
+                            Enter Verification Code
+                        </h5>
+                        
+                        {% if session.get('verification_email') %}
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Verification code sent to: <strong>{{ session.get('verification_email') }}</strong>
+                        </div>
+                        {% endif %}
+                        
+                        <form method="POST" id="verifyForm">
+                            {{ verify_form.hidden_tag() }}
+                            <input type="hidden" name="action" value="verify">
+                            
+                            <div class="mb-3">
+                                {{ verify_form.verification_code.label(class="form-label") }}
+                                {{ verify_form.verification_code(class="form-control form-control-lg text-center", 
+                                    placeholder="000000",
+                                    maxlength="6",
+                                    style="font-size: 24px; letter-spacing: 8px; font-family: 'Courier New', monospace;") }}
+                                {% if verify_form.verification_code.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in verify_form.verification_code.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    The verification code is valid for 15 minutes and has a maximum of 5 attempts.
+                                </small>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success btn-lg w-100">
+                                <i class="fas fa-check-circle me-2"></i>Verify and Save Email
+                            </button>
+                        </form>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 帮助信息 -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-question-circle me-2"></i>Need Help?
+                    </h6>
+                    <ul class="mb-0">
+                        <li>Make sure to check your spam folder if you don't receive the email</li>
+                        <li>The verification code expires after 15 minutes</li>
+                        <li>You can request a new code if the current one expires</li>
+                        <li>Contact support if you continue to have issues</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 验证码输入框只允许数字
+document.querySelector('input[name="verification_code"]').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+
+// 发送验证码按钮防重复点击
+document.getElementById('sendForm').addEventListener('submit', function() {
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+    
+    // 60秒后重新启用
+    setTimeout(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send Verification Code';
+    }, 60000);
+});
+</script>
+{% endblock %}

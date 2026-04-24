@@ -1,0 +1,244 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}Admin Panel - proISDB{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- 页面标题 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h1>
+                    <i class="fas fa-tachometer-alt me-2"></i>Admin Panel
+                </h1>
+                <div class="text-muted">
+                    Welcome, {{ current_user.username }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-primary border-4 shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                                Total IS Elements
+                            </div>
+                            <div class="h5 mb-0 fw-bold text-dark">
+                                {{ stats.total_elements }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-database fa-2x text-muted"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-warning border-4 shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-warning text-uppercase mb-1">
+                                Pending Submissions
+                            </div>
+                            <div class="h5 mb-0 fw-bold text-dark">
+                                {{ stats.pending_elements }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-muted"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-success border-4 shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                                Published Articles
+                            </div>
+                            <div class="h5 mb-0 fw-bold text-dark">
+                                {{ stats.published_articles }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-book fa-2x text-muted"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-info border-4 shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-info text-uppercase mb-1">
+                                Today Views
+                            </div>
+                            <div class="h5 mb-0 fw-bold text-dark">
+                                {{ today_views }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-eye fa-2x text-muted"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速操作 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-tasks me-2"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('submission.pending_review') }}" class="btn btn-outline-warning btn-lg w-100 h-100 d-flex flex-column justify-content-center">
+                                <i class="fas fa-tasks fa-2x mb-2"></i>
+                                Review Submissions
+                                {% if stats.pending_elements > 0 %}
+                                <span class="badge bg-warning mt-1">{{ stats.pending_elements }}</span>
+                                {% endif %}
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('knowledge.admin_index') }}" class="btn btn-outline-primary btn-lg w-100 h-100 d-flex flex-column justify-content-center">
+                                <i class="fas fa-book fa-2x mb-2"></i>
+                                Content Management
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('admin.is_elements') }}" class="btn btn-outline-info btn-lg w-100 h-100 d-flex flex-column justify-content-center">
+                                <i class="fas fa-database fa-2x mb-2"></i>
+                                IS Element Data
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('admin.blast_database') }}" class="btn btn-outline-success btn-lg w-100 h-100 d-flex flex-column justify-content-center">
+                                <i class="fas fa-dna fa-2x mb-2"></i>
+                                BLAST Database
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 两列布局 -->
+    <div class="row">
+        <!-- 待审核提交 -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-clock me-2"></i>Pending Reviews
+                    </h6>
+                    <a href="{{ url_for('submission.pending_review') }}" class="btn btn-sm btn-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_submissions %}
+                        {% for element in recent_submissions %}
+                        <div class="border-start border-3 border-warning p-2 mb-3">
+                            <h6 class="mb-1">{{ element.name }}</h6>
+                            <p class="text-muted mb-1">{{ element.family }} | {{ element.host }}</p>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>{{ element.submission_date.strftime('%m-%d %H:%M') }}
+                            </small>
+                            <div class="mt-2">
+                                <a href="{{ url_for('submission.review_submission', id=element.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">Review</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                            <p class="text-muted mb-0">No pending submissions</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 最新文章 -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-book me-2"></i>Latest Articles
+                    </h6>
+                    <a href="{{ url_for('knowledge.admin_articles') }}" class="btn btn-sm btn-primary">
+                        Manage Articles
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_articles %}
+                        {% for article in recent_articles %}
+                        <div class="border-start border-3 border-info p-2 mb-3">
+                            <h6 class="mb-1">{{ article.title }}</h6>
+                            <div class="mb-1">
+                                <span class="badge bg-{{ 'success' if article.status == 'published' else 'warning' }}">
+                                    {{ 'Published' if article.status == 'published' else 'Draft' }}
+                                </span>
+                                {% if article.is_featured %}
+                                <span class="badge bg-primary">Featured</span>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>{{ article.created_at.strftime('%m-%d %H:%M') }}
+                            </small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-plus-circle fa-2x text-primary mb-2"></i>
+                            <p class="text-muted mb-0">No articles yet</p>
+                            <a href="{{ url_for('knowledge.admin_new_article') }}" class="btn btn-sm btn-primary mt-2">
+                                Create Article
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.text-xs {
+    font-size: .7rem;
+}
+.no-gutters {
+    margin-right: 0;
+    margin-left: 0;
+}
+.no-gutters > .col,
+.no-gutters > [class*="col-"] {
+    padding-right: 0;
+    padding-left: 0;
+}
+</style>
+{% endblock %}
