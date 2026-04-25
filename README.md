@@ -1,4 +1,4 @@
-# InsertQ (proISDB)
+# proISDB
 
 Insertion Sequence (IS) element database platform with BLAST alignment, advanced search, and community-driven data submission.
 
