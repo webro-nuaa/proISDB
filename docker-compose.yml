@@ -7,8 +7,6 @@ services:
       MYSQL_DATABASE: ${MYSQL_DB}
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
-    ports:
-      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./insertq_db.sql:/docker-entrypoint-initdb.d/01_schema.sql
@@ -26,8 +24,6 @@ services:
   redis:
     image: redis:7-alpine
     restart: always
-    ports:
-      - "6380:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
@@ -46,7 +42,7 @@ services:
     image: insertq-web:latest
     restart: always
     ports:
-      - "5500:5500"
+      - "127.0.0.1:5500:5500"
     env_file:
       - .env
     environment:
