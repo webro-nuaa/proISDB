@@ -52,14 +52,17 @@ sudo docker compose up -d
 
 ### Configure .env
 
-Key variables in `.env`:
+Only **2 values** must be changed:
 
 ```
-SECRET_KEY=your-secret-key
-MYSQL_PASSWORD=your-mysql-password
-MYSQL_DB=insertq_db
-FLASK_ENV=production
+# Generate a random secret key:
+python -c "import secrets; print(secrets.token_hex(32))"
+
+MYSQL_PASSWORD=your-strong-password    # MySQL root password
+SECRET_KEY=generated-random-string     # Flask encryption key
 ```
+
+All other values are automatically overridden by `docker-compose.yml`.
 
 ### Verify
 
@@ -70,24 +73,25 @@ curl http://localhost:5500/health
 ## Architecture
 
 ```
-Nginx (:80/:443)
-  └── Flask/Gunicorn (:5500)
-        ├── MySQL 8.4 (:3306)
-        ├── Redis 7 (:6379)
-        │     ├── DB 0: Celery broker
-        │     ├── DB 1: Cache
-        │     └── DB 2: Session
-        └── Celery Worker (BLAST tasks)
+Internet
+  └── Nginx (:80/:443, HTTPS)
+        └── Flask/Gunicorn (127.0.0.1:5500, internal only)
+              ├── MySQL 8.4 (internal, no exposed port)
+              ├── Redis 7 (internal, no exposed port)
+              │     ├── DB 0: Celery broker
+              │     ├── DB 1: Cache
+              │     └── DB 2: Session
+              └── Celery Worker (BLAST tasks)
 ```
 
 ## Services
 
-| Service | Port | Description |
-|---------|------|-------------|
-| web | 5500 | Flask application |
-| celery_worker | — | Async task processor (BLAST) |
-| mysql | 3306 | Database |
-| redis | 6379 | Cache, session, message broker |
+| Service | Port | Exposed | Description |
+|---------|------|---------|-------------|
+| web | 5500 | localhost only | Flask application |
+| celery_worker | — | no | Async task processor (BLAST) |
+| mysql | 3306 | no | Database (internal) |
+| redis | 6379 | no | Cache, session, broker (internal) |
 
 ## Development
 
