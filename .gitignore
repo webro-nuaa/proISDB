@@ -64,10 +64,16 @@ htmlcov/
 # 文档
 docs/_build/
 
+# Task plan
+task_plan.md
+
 # 临时文件
 *.tmp
 *.bak
 *.backup
+
+# Flask session files
+flask_session/
 
 # Migration备份
 migrations/versions/*.backup

@@ -43,4 +43,4 @@ docker-compose*.yml
 *.backup
 *.tmp
 
-scripts/
+scripts/sql/

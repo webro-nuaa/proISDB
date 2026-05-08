@@ -1364,8 +1364,7 @@ def approve_download_request(request_id):
     try:
         download_req.status = 'approved'
         download_req.reviewed_at = datetime.now(timezone.utc)
-        download_req.reviewer_id = current_user.id
-        download_req.review_comment = comment
+        download_req.reviewer_comment = comment
         
         db.session.commit()
         
@@ -1413,8 +1412,7 @@ def reject_download_request(request_id):
     try:
         download_req.status = 'rejected'
         download_req.reviewed_at = datetime.now(timezone.utc)
-        download_req.reviewer_id = current_user.id
-        download_req.review_comment = comment
+        download_req.reviewer_comment = comment
         
         db.session.commit()
         

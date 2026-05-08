@@ -41,7 +41,11 @@ class EmailVerification(db.Model):
     
     def is_expired(self):
         """检查验证码是否过期"""
-        return datetime.now(timezone.utc) > self.expires_at
+        now = datetime.now(timezone.utc)
+        expires = self.expires_at
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        return now > expires
     
     def is_locked(self):
         """检查是否因尝试次数过多而被锁定"""

@@ -54,6 +54,8 @@ def admin_user(db):
         role='admin',
         first_name='Admin',
         last_name='User',
+        institution='Admin Institute',
+        country='CN',
         is_active=True
     )
     user.password = 'AdminPass123'

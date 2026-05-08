@@ -174,7 +174,7 @@ def user_avatar(user, size=32):
     
     # 生成基于用户名的颜色
     import hashlib
-    hash_obj = hashlib.md5(user.username.encode())
+    hash_obj = hashlib.md5(user.username.encode(), usedforsecurity=False)
     color = hash_obj.hexdigest()[:6]
     
     initial = user.username[0].upper()
