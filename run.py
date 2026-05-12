@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-proISDB Flask应用启动文件
+proISDB Flask application entry point.
 """
 import os
 import click
@@ -9,18 +9,16 @@ from flask import current_app
 from flask.cli import with_appcontext
 from dotenv import load_dotenv
 
-# 加载.env文件
 load_dotenv()
 
 from app import create_app, db
 from app.models import User, ISElement, KnowledgeCategory, SystemConfig
 
-# 创建应用实例
 app = create_app(os.getenv('FLASK_ENV', 'development'))
 
 @app.shell_context_processor
 def make_shell_context():
-    """Shell上下文"""
+    """Shell context."""
     return {
         'db': db,
         'User': User,
@@ -30,16 +28,16 @@ def make_shell_context():
     }
 
 @app.cli.command()
-@click.option('--username', prompt=True, help='ROOT用户名')
-@click.option('--email', prompt=True, help='ROOT邮箱')
-@click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True, help='ROOT密码')
+@click.option('--username', prompt=True, help='Root username')
+@click.option('--email', prompt=True, help='Root email')
+@click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True, help='Root password')
 def create_root(username, email, password):
-    """创建ROOT超级管理员"""
+    """Create root super-admin user."""
     user = User.query.filter_by(username=username).first()
     if user:
-        click.echo(f'用户 {username} 已存在')
+        click.echo(f'User {username} already exists.')
         return
-    
+
     user = User(
         username=username,
         email=email,
@@ -49,29 +47,28 @@ def create_root(username, email, password):
         is_active=True
     )
     user.password = password
-    
+
     db.session.add(user)
     db.session.commit()
-    
-    click.echo(f'ROOT用户 {username} 创建成功！')
-    click.echo('注意：ROOT用户拥有最高权限，请妥善保管账号密码。')
+
+    click.echo(f'Root user {username} created successfully.')
+    click.echo('Note: Root user has full privileges. Keep credentials safe.')
 
 @app.cli.command()
 @with_appcontext
 def init_db():
-    """初始化数据库"""
+    """Initialize database with defaults."""
     db.create_all()
-    
-    # 创建默认系统配置
+
     configs = [
-        ('site_name', 'proISDB', '网站名称'),
-        ('site_description', 'IS元素数据库和科普平台', '网站描述'),
-        ('records_per_page', '20', '每页显示记录数'),
-        ('enable_registration', 'true', '是否允许用户注册'),
-        ('require_approval', 'true', '新提交数据是否需要审核'),
-        ('max_file_size', '16777216', '最大文件上传大小（字节）')
+        ('site_name', 'proISDB', 'Site name'),
+        ('site_description', 'IS element database platform', 'Site description'),
+        ('records_per_page', '20', 'Records per page'),
+        ('enable_registration', 'true', 'Enable user registration'),
+        ('require_approval', 'true', 'Require approval for submissions'),
+        ('max_file_size', '16777216', 'Max file upload size (bytes)')
     ]
-    
+
     for key, value, desc in configs:
         if not SystemConfig.query.filter_by(config_key=key).first():
             config = SystemConfig(
@@ -80,37 +77,36 @@ def init_db():
                 description=desc
             )
             db.session.add(config)
-    
-    # 创建默认知识分类
+
     categories = [
-        ('IS元素基础', 'IS元素的基本概念和分类'),
-        ('转座机制', '转座子的转座机制和调控'),
-        ('进化分析', 'IS元素在基因组进化中的作用'),
-        ('实验方法', 'IS元素研究的实验技术和方法')
+        ('IS Elements Basics', 'Basic concepts and classification of IS elements'),
+        ('Transposition Mechanisms', 'Transposition mechanisms and regulation'),
+        ('Evolutionary Analysis', 'Role of IS elements in genome evolution'),
+        ('Experimental Methods', 'Experimental techniques for IS element research')
     ]
-    
+
     for name, desc in categories:
         if not KnowledgeCategory.query.filter_by(name=name).first():
             category = KnowledgeCategory(name=name, description=desc)
             db.session.add(category)
-    
+
     db.session.commit()
-    click.echo('数据库初始化完成！')
+    click.echo('Database initialized.')
 
 @app.cli.command()
-@click.option('--drop', is_flag=True, help='删除所有表后重新创建')
+@click.option('--drop', is_flag=True, help='Drop all tables before recreating')
 def reset_db(drop):
-    """重置数据库"""
+    """Reset database."""
     if drop:
         db.drop_all()
-        click.echo('已删除所有数据表')
-    
+        click.echo('All tables dropped.')
+
     db.create_all()
-    click.echo('数据库重置完成！')
+    click.echo('Database reset complete.')
 
 @app.cli.command()
 def test():
-    """运行测试"""
+    """Run tests."""
     import unittest
     tests = unittest.TestLoader().discover('tests')
     unittest.TextTestRunner(verbosity=2).run(tests)

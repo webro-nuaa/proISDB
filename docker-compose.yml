@@ -39,6 +39,10 @@ services:
         max-file: "3"
 
   web:
+    build:
+      context: .
+      args:
+        USE_CHINA_MIRROR: ${USE_CHINA_MIRROR:-false}
     image: insertq-web:latest
     restart: always
     ports:
@@ -75,6 +79,10 @@ services:
         max-file: "5"
 
   celery_worker:
+    build:
+      context: .
+      args:
+        USE_CHINA_MIRROR: ${USE_CHINA_MIRROR:-false}
     image: insertq-web:latest
     restart: always
     command: celery -A celery_worker.celery worker --loglevel=info --concurrency=2

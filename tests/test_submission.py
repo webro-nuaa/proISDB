@@ -78,7 +78,7 @@ class TestSubmissionViews:
         }, follow_redirects=True)
         assert rv.status_code == 200
 
-        updated = ISElement.query.get(element.id)
+        updated = db.session.get(ISElement, element.id)
         assert updated.status == 'approved'
 
     def test_reject_submission(self, admin_client, db):
@@ -92,7 +92,7 @@ class TestSubmissionViews:
         }, follow_redirects=True)
         assert rv.status_code == 200
 
-        updated = ISElement.query.get(element.id)
+        updated = db.session.get(ISElement, element.id)
         assert updated.status == 'rejected'
 
     def test_review_not_found(self, admin_client):

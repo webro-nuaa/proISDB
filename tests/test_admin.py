@@ -105,7 +105,7 @@ class TestAdminISElementManagement:
         rv = admin_client.get(f'/admin/is-element/{el.id}/edit')
         assert rv.status_code == 200
 
-    def test_edit_is_element_update(self, admin_client, sample_elements):
+    def test_edit_is_element_update(self, admin_client, db, sample_elements):
         el = sample_elements[0]
         rv = admin_client.post(f'/admin/is-element/{el.id}/edit', data={
             'name': 'IS1_Updated',
@@ -115,7 +115,7 @@ class TestAdminISElementManagement:
         }, follow_redirects=True)
         assert rv.status_code == 200
 
-        updated = ISElement.query.get(el.id)
+        updated = db.session.get(ISElement, el.id)
         assert updated.name == 'IS1_Updated'
 
     def test_delete_is_element(self, admin_client, db):
@@ -178,15 +178,15 @@ class TestAdminUserManagement:
         }, follow_redirects=True)
         assert rv.status_code == 200
 
-    def test_disable_admin(self, client, root_user, admin_user):
+    def test_disable_admin(self, client, db, root_user, admin_user):
         client.post('/auth/login', data={'username': 'rootuser', 'password': 'RootPass123'})
         rv = client.post(f'/admin/admins/{admin_user.id}/disable', follow_redirects=True)
         assert rv.status_code == 200
 
-        updated = User.query.get(admin_user.id)
+        updated = db.session.get(User, admin_user.id)
         assert updated.is_active is False
 
-    def test_enable_admin(self, client, root_user, admin_user):
+    def test_enable_admin(self, client, db, root_user, admin_user):
         admin_user.is_active = False
         from app import db
         db.session.commit()
@@ -195,7 +195,7 @@ class TestAdminUserManagement:
         rv = client.post(f'/admin/admins/{admin_user.id}/enable', follow_redirects=True)
         assert rv.status_code == 200
 
-        updated = User.query.get(admin_user.id)
+        updated = db.session.get(User, admin_user.id)
         assert updated.is_active is True
 
     def test_cannot_disable_root(self, client, root_user):

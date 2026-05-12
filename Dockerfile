@@ -1,7 +1,13 @@
+ARG USE_CHINA_MIRROR=false
+
 FROM python:3.11-slim
 
-RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || \
-    sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true
+ARG USE_CHINA_MIRROR
+
+RUN if [ "$USE_CHINA_MIRROR" = "true" ]; then \
+        sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || \
+        sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true; \
+    fi
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ncbi-blast+ \
@@ -14,7 +20,9 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple \
+RUN if [ "$USE_CHINA_MIRROR" = "true" ]; then \
+        pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple; \
+    fi \
     && pip install --no-cache-dir -r requirements.txt
 
 COPY . .

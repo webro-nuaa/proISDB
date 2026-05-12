@@ -503,7 +503,7 @@ html {
                         </h6>
                         <div class="d-flex flex-wrap gap-2">
                             {% for tag in article.tags %}
-                            <a href="{{ url_for('knowledge.tag_articles', name=tag.name) }}" 
+                            <a href="{{ url_for('knowledge.tag_articles', tag_name=tag.name) }}"
                                class="badge text-decoration-none py-2 px-3 rounded-pill" 
                                style="background-color: {{ tag.color }}; font-size: 0.9rem;">
                                 {{ tag.name }}

@@ -479,7 +479,7 @@ def upload_image():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
-# 添加到 app/views/knowledge.py 末尾的代码
+
 
 @knowledge.route('/admin/article/<int:id>/delete', methods=['GET', 'POST'])
 @login_required

@@ -189,7 +189,7 @@
                             {% if article.tags %}
                             <div class="article-tags">
                                 {% for tag in article.tags[:3] %}
-                                <a href="{{ url_for('knowledge.tag_articles', name=tag.name) }}" 
+                                <a href="{{ url_for('knowledge.tag_articles', tag_name=tag.name) }}" 
                                    class="article-tag" 
                                    style="background-color: {{ tag.color }}">{{ tag.name }}</a>
                                 {% endfor %}

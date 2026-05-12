@@ -1337,8 +1337,8 @@ def download_request_detail(request_id):
     
     # 获取申请的IS元素列表
     items = DownloadRequestItem.query.filter_by(request_id=request_id).all()
-    elements = [ISElement.query.get(item.is_element_id) for item in items]
-    
+    elements = [db.session.get(ISElement, item.is_element_id) for item in items]
+
     return render_template('admin/download_request_detail.html',
                          download_request=download_req,
                          elements=elements)
@@ -1451,7 +1451,7 @@ def delete_download_requests():
         # 删除记录
         deleted_count = 0
         for req_id in ids:
-            download_req = DownloadRequest.query.get(req_id)
+            download_req = db.session.get(DownloadRequest, req_id)
             if download_req:
                 # 记录日志
                 AdminLog.log_action(
@@ -1494,8 +1494,8 @@ def send_download_approval_email(download_req):
     
     # 获取申请的IS元素
     items = DownloadRequestItem.query.filter_by(request_id=download_req.id).all()
-    elements = [ISElement.query.get(item.is_element_id) for item in items]
-    
+    elements = [db.session.get(ISElement, item.is_element_id) for item in items]
+
     # 根据申请的格式生成文件
     export_format = download_req.format or 'csv'
     

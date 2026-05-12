@@ -37,14 +37,13 @@ class ISElement(db.Model):
 
     @property
     def left_flank(self):
-        """尝试从 dna_sequence 推断左翼序列（取前 50 nt），若不存在则返回 None。"""
         seq = getattr(self, 'is_sequence', None)
         if seq:
             return seq[:50]
+        return None
 
     @property
     def right_flank(self):
-        """尝试从 dna_sequence 推断右翼序列（取后 50 nt），若不存在则返回 None。"""
         seq = getattr(self, 'is_sequence', None)
         if seq:
             return seq[-50:]

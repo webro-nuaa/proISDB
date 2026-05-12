@@ -38,8 +38,8 @@ Insertion Sequence (IS) element database platform with BLAST alignment, advanced
 
 ```bash
 # Clone the repository
-git clone https://github.com/webro-nuaa/InsertQ.git
-cd InsertQ
+git clone https://github.com/webro-nuaa/proISDB.git
+cd proISDB
 
 # Configure environment
 cp .env.example .env
@@ -120,23 +120,23 @@ sudo docker compose up -d --no-deps web celery_worker
 
 ```bash
 # On old server: export database
-sudo docker exec insertq-mysql-1 mysqldump -u root -p insertq_db > backup.sql
+sudo docker exec proisdb-mysql-1 mysqldump -u root -p proisdb_db > backup.sql
 
 # On new server: clone and deploy
-git clone https://github.com/webro-nuaa/InsertQ.git
-cd InsertQ
+git clone https://github.com/webro-nuaa/proISDB.git
+cd proISDB
 cp .env.example .env && nano .env
 sudo docker compose build
 sudo docker compose up -d mysql redis
 sleep 10
-sudo docker exec -i insertq-mysql-1 mysql -u root -p insertq_db < backup.sql
+sudo docker exec -i proisdb-mysql-1 mysql -u root -p proisdb_db < backup.sql
 sudo docker compose up -d
 ```
 
 ## Testing
 
 ```bash
-sudo docker exec insertq-web-1 python -m pytest tests/ -v
+sudo docker exec proisdb-web-1 python -m pytest tests/ -v
 ```
 
 ## Project Structure

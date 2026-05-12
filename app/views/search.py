@@ -106,16 +106,15 @@ def index():
             if search_params['origin']:
                 origin_value = search_params['origin']
                 origin_match = search_params['origin_match']
-                if hasattr(ISElement, 'origin'):
-                    safe_origin = escape_like(origin_value)
-                    if origin_match == 'contains':
-                        query = query.filter(ISElement.origin.contains(safe_origin))
-                    elif origin_match == 'begin_with':
-                        query = query.filter(ISElement.origin.startswith(safe_origin))
-                    elif origin_match == 'end_with':
-                        query = query.filter(ISElement.origin.endswith(safe_origin))
-                    elif origin_match == 'equal_to':
-                        query = query.filter(ISElement.origin == origin_value)
+                safe_origin = escape_like(origin_value)
+                if origin_match == 'contains':
+                    query = query.filter(ISElement.origin.contains(safe_origin))
+                elif origin_match == 'begin_with':
+                    query = query.filter(ISElement.origin.startswith(safe_origin))
+                elif origin_match == 'end_with':
+                    query = query.filter(ISElement.origin.endswith(safe_origin))
+                elif origin_match == 'equal_to':
+                    query = query.filter(ISElement.origin == origin_value)
                 search_conditions.append(f"origin({origin_match}):{origin_value}")
             
             # 处理MGE类型

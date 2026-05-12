@@ -13,6 +13,7 @@ jobs:
     env:
       SECRET_KEY: ci-test-secret-key-for-testing
       MYSQL_PASSWORD: ci_test_password
+      USE_CHINA_MIRROR: false
 
     steps:
       - uses: actions/checkout@v4
@@ -99,6 +100,8 @@ jobs:
         with:
           context: .
           push: ${{ vars.DOCKERHUB_USERNAME != '' }}
+          build-args: |
+            USE_CHINA_MIRROR=false
           tags: |
             ${{ vars.DOCKERHUB_USERNAME || 'insertq' }}/insertq-web:latest
             ${{ vars.DOCKERHUB_USERNAME || 'insertq' }}/insertq-web:${{ github.sha }}
