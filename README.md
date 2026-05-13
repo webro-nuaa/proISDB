@@ -57,7 +57,7 @@ sudo docker compose exec web flask create-root
 curl http://localhost/health
 ```
 
-The web service listens on port 80. Access at `http://your-server-ip` (or `http://localhost` locally).
+The database is automatically initialized on container start. Access at `http://your-server-ip` (or `http://localhost` locally).
 
 > For HTTPS, set up a reverse proxy (Nginx). See `deploy/nginx.conf` for a reference config.
 
@@ -78,15 +78,14 @@ python -c "import secrets; print(secrets.token_hex(32))"
 
 ### First-time Setup
 
-After starting the services, create the root admin account and initialize defaults:
+After starting the services, create the root admin account:
 
 ```bash
 # Create root super-admin (interactive prompts)
 sudo docker compose exec web flask create-root
-
-# Initialize database with default configs and categories
-sudo docker compose exec web flask init-db
 ```
+
+Database tables and default configs are initialized automatically on container start.
 
 ## Architecture
 
@@ -192,7 +191,6 @@ sudo docker compose up -d
 ```bash
 # Manage the app
 sudo docker compose exec web flask create-root     # Create root admin user
-sudo docker compose exec web flask init-db          # Initialize default configs
 sudo docker compose exec web flask reset-db         # Recreate all tables (--drop to wipe first)
 sudo docker compose exec web flask test             # Run test suite
 ```

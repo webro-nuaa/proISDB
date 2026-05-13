@@ -29,6 +29,10 @@ COPY . .
 
 RUN mkdir -p logs blast_db
 
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 5500
 
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["gunicorn", "-c", "deploy/gunicorn.conf.py", "run:app"]
