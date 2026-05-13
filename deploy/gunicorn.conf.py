@@ -1,10 +1,9 @@
-import multiprocessing
 import os
 
 bind = f"0.0.0.0:{os.environ.get('PORT', '5500')}"
-workers = multiprocessing.cpu_count() * 2 + 1
+workers = int(os.environ.get('GUNICORN_WORKERS', '4'))
 worker_class = "gthread"
-threads = 2
+threads = int(os.environ.get('GUNICORN_THREADS', '2'))
 timeout = 120
 keepalive = 5
 preload_app = os.environ.get('GUNICORN_PRELOAD_APP', 'true').lower() in ['true', 'on', '1']

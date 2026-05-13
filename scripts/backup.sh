@@ -1,23 +1,23 @@
 #!/bin/bash
-# InsertQ 数据库自动备份脚本
+# proISDB 数据库自动备份脚本
 # 用法: ./scripts/backup.sh [--upload]
 # --upload: 备份后上传到远程存储（需配置 rclone）
 
 set -euo pipefail
 
-BACKUP_DIR="${BACKUP_DIR:-/opt/insertq/backups}"
+BACKUP_DIR="${BACKUP_DIR:-/opt/proisdb/backups}"
 KEEP_DAYS="${KEEP_DAYS:-30}"
-MYSQL_CONTAINER="${MYSQL_CONTAINER:-insertq-mysql-1}"
+MYSQL_CONTAINER="${MYSQL_CONTAINER:-proisdb-mysql-1}"
 MYSQL_USER="${MYSQL_USER:-root}"
-MYSQL_DB="${MYSQL_DB:-insertq_db}"
+MYSQL_DB="${MYSQL_DB:-proisdb_db}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_FILE="${BACKUP_DIR}/insertq_db_${TIMESTAMP}.sql.gz"
+BACKUP_FILE="${BACKUP_DIR}/proisdb_db_${TIMESTAMP}.sql.gz"
 
 mkdir -p "${BACKUP_DIR}"
 
-echo "=== InsertQ Backup Started: $(date) ==="
+echo "=== proISDB Backup Started: $(date) ==="
 
 echo "[1/3] Dumping MySQL database..."
 if [ -n "${MYSQL_PASSWORD}" ]; then
@@ -37,12 +37,12 @@ else
 fi
 
 echo "[2/3] Cleaning up backups older than ${KEEP_DAYS} days..."
-find "${BACKUP_DIR}" -name "insertq_db_*.sql.gz" -mtime +${KEEP_DAYS} -delete 2>/dev/null || true
+find "${BACKUP_DIR}" -name "proisdb_db_*.sql.gz" -mtime +${KEEP_DAYS} -delete 2>/dev/null || true
 echo "  -> Done"
 
 if [ "${1:-}" = "--upload" ] && command -v rclone &>/dev/null; then
     echo "[3/3] Uploading to remote storage..."
-    rclone copy "${BACKUP_FILE}" remote:insertq-backups/ 2>/dev/null && echo "  -> Uploaded" || echo "  -> Upload failed"
+    rclone copy "${BACKUP_FILE}" remote:proisdb-backups/ 2>/dev/null && echo "  -> Uploaded" || echo "  -> Upload failed"
 else
     echo "[3/3] Upload skipped (use --upload or install rclone)"
 fi

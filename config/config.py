@@ -23,7 +23,7 @@ class Config:
     MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')
     MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
     MYSQL_PASSWORD = _require_env('MYSQL_PASSWORD')
-    MYSQL_DB = os.environ.get('MYSQL_DB', 'insertq_db')
+    MYSQL_DB = os.environ.get('MYSQL_DB', 'proisdb_db')
 
     SQLALCHEMY_DATABASE_URI = (
         f'mysql+pymysql://{quote_plus(MYSQL_USER)}:{quote_plus(MYSQL_PASSWORD)}'
@@ -116,7 +116,7 @@ class ProductionConfig(Config):
                 os.mkdir('logs')
 
             file_handler = RotatingFileHandler(
-                'logs/insertq.log',
+                'logs/proisdb.log',
                 maxBytes=10240000,
                 backupCount=10
             )

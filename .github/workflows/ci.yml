@@ -103,18 +103,18 @@ jobs:
           build-args: |
             USE_CHINA_MIRROR=false
           tags: |
-            ${{ vars.DOCKERHUB_USERNAME || 'insertq' }}/insertq-web:latest
-            ${{ vars.DOCKERHUB_USERNAME || 'insertq' }}/insertq-web:${{ github.sha }}
+            ${{ vars.DOCKERHUB_USERNAME || 'proisdb' }}/proisdb-web:latest
+            ${{ vars.DOCKERHUB_USERNAME || 'proisdb' }}/proisdb-web:${{ github.sha }}
 
       - name: Export offline image
         run: |
-          docker save insertq-web:latest | gzip > insertq-web.tar.gz
+          docker save proisdb-web:latest | gzip > proisdb-web.tar.gz
 
       - name: Upload offline image artifact
         uses: actions/upload-artifact@v4
         with:
-          name: insertq-web-image
-          path: insertq-web.tar.gz
+          name: proisdb-web-image
+          path: proisdb-web.tar.gz
           retention-days: 7
 
   deploy:
@@ -130,7 +130,7 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            cd ${{ secrets.DEPLOY_PATH || '/opt/insertq' }}
+            cd ${{ secrets.DEPLOY_PATH || '/opt/proisdb' }}
             docker compose pull web celery_worker
             docker compose up -d --no-deps web celery_worker
             sleep 5

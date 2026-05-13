@@ -1,5 +1,5 @@
 #!/bin/bash
-# InsertQ 部署脚本
+# proISDB 部署脚本
 # 用法:
 #   ./scripts/deploy.sh          - 完整部署（构建+启动）
 #   ./scripts/deploy.sh update   - 滚动更新（仅重启 web 和 celery_worker）

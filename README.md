@@ -8,10 +8,10 @@ Insertion Sequence (IS) element database platform with BLAST alignment, advanced
 - **BLAST Alignment** — Local blastn/blastp sequence alignment via NCBI BLAST+
 - **Knowledge Base** — Community articles with Markdown support
 - **Data Submission** — User-submitted IS element data with admin review workflow
-- **Admin Dashboard** — User management, data review, batch import, statistics
-- **REST API** — Swagger-documented API endpoints
+- **Admin Dashboard** — User management, data review, batch import/export, statistics
+- **REST API** — Flask-RESTX documented API endpoints
 - **Email Verification** — Secure email change workflow
-- **Download Request** — Visitor data download application system
+- **Download Request** — Visitor data download application system with admin approval
 
 ## Tech Stack
 
@@ -19,11 +19,11 @@ Insertion Sequence (IS) element database platform with BLAST alignment, advanced
 |-----------|-----------|
 | Backend | Flask 2.3.3, SQLAlchemy, Celery 5.3 |
 | Database | MySQL 8.4, Redis 7 |
-| Search | SQLAlchemy ORM (LIKE query) |
+| Search | SQLAlchemy ORM |
 | BLAST | NCBI BLAST+ (local) |
 | WSGI | Gunicorn (gthread) |
-| Reverse Proxy | Nginx (HTTPS) |
-| Deployment | Docker Compose |
+| Reverse Proxy | Nginx (host-level, HTTPS) |
+| Deployment | Docker Compose (4 services) |
 | CI/CD | GitHub Actions |
 | Error Tracking | Sentry (optional) |
 
@@ -33,6 +33,7 @@ Insertion Sequence (IS) element database platform with BLAST alignment, advanced
 
 - Docker & Docker Compose
 - Git
+- Python 3.11+ (for running CLI commands like `flask create-root`)
 
 ### Deploy
 
@@ -48,79 +49,129 @@ nano .env
 # Build and start all services
 sudo docker compose build
 sudo docker compose up -d
+
+# Create the root admin user
+sudo docker compose exec web flask create-root
+
+# Verify
+curl http://localhost:5500/health
 ```
+
+> **Note:** The web service binds to `127.0.0.1:5500` (localhost only). Set up a reverse proxy (Nginx) for external access. See `deploy/nginx.conf` for a reference config.
 
 ### Configure .env
 
-Only **2 values** must be changed:
+Only **2 values** must be changed for a Docker deployment. The rest are pre-set in `docker-compose.yml`.
 
 ```
-# Generate a random secret key:
-python -c "import secrets; print(secrets.token_hex(32))"
-
-MYSQL_PASSWORD=your-strong-password    # MySQL root password
-SECRET_KEY=generated-random-string     # Flask encryption key
+MYSQL_PASSWORD=your-strong-password       # MySQL root password
+SECRET_KEY=generated-random-string        # Flask encryption key
 ```
 
-All other values are automatically overridden by `docker-compose.yml`.
-
-### Verify
+Generate a secret key:
 
 ```bash
-curl http://localhost:5500/health
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+### First-time Setup
+
+After starting the services, create the root admin account and initialize defaults:
+
+```bash
+# Create root super-admin (interactive prompts)
+sudo docker compose exec web flask create-root
+
+# Initialize database with default configs and categories
+sudo docker compose exec web flask init-db
 ```
 
 ## Architecture
 
 ```
 Internet
-  └── Nginx (:80/:443, HTTPS)
-        └── Flask/Gunicorn (127.0.0.1:5500, internal only)
-              ├── MySQL 8.4 (internal, no exposed port)
-              ├── Redis 7 (internal, no exposed port)
+  └── Nginx (:80/:443, HTTPS) — runs on host
+        └── Flask/Gunicorn (127.0.0.1:5500, internal only) — Docker
+              ├── MySQL 8.4 (internal, no exposed port) — Docker
+              ├── Redis 7 (internal, no exposed port) — Docker
               │     ├── DB 0: Celery broker
               │     ├── DB 1: Cache
               │     └── DB 2: Session
-              └── Celery Worker (BLAST tasks)
+              └── Celery Worker (BLAST tasks) — Docker
 ```
 
 ## Services
 
-| Service | Port | Exposed | Description |
-|---------|------|---------|-------------|
-| web | 5500 | localhost only | Flask application |
-| celery_worker | — | no | Async task processor (BLAST) |
-| mysql | 3306 | no | Database (internal) |
-| redis | 6379 | no | Cache, session, broker (internal) |
+| Service | Host Port | Exposed | Purpose |
+|---------|-----------|---------|---------|
+| web | 5500 | localhost only | Flask application (Gunicorn) |
+| celery_worker | — | no | Async BLAST task processor |
+| mysql | 3306 | no | Database (internal Docker network) |
+| redis | 6379 | no | Cache, session store, Celery broker |
 
 ## Development
 
 ```bash
-# Start development environment (code mounted, auto-reload)
+# Start dev environment with code hot-reload
 sudo docker compose -f docker-compose.dev.yml up -d
 ```
 
-Changes to templates and Python files are reflected immediately.
+The dev compose file:
+- Mounts `app/` and `config/` directories into the container for live reload
+- Exposes MySQL on `127.0.0.1:3307` and Redis on `127.0.0.1:6380` for local tools
+- Disables Gunicorn preload so code changes take effect immediately
+
+## Nginx Setup
+
+A reference Nginx config is provided at `deploy/nginx.conf`. It proxies all requests to the Flask app on `127.0.0.1:5500` with HTTPS redirect and longer timeouts for BLAST result pages.
+
+```bash
+# Install and configure
+sudo apt install nginx
+sudo cp deploy/nginx.conf /etc/nginx/sites-available/proisdb
+sudo ln -s /etc/nginx/sites-available/proisdb /etc/nginx/sites-enabled/
+# Edit server_name and SSL cert paths, then:
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+For Let's Encrypt SSL:
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d your-domain.com
+```
 
 ## Update
 
 ```bash
+# Using the deploy script (recommended)
+./scripts/deploy.sh update
+
+# Or manually:
 git pull
-sudo docker compose build
+sudo docker compose build web celery_worker
 sudo docker compose up -d --no-deps web celery_worker
 ```
+
+The `update` command does a rolling restart — web is replaced first, health-checked, then the worker is replaced.
 
 ## Backup
 
 ```bash
+# Local backup (keeps 30 days)
 ./scripts/backup.sh
+
+# Backup and upload to remote (requires rclone configured)
+./scripts/backup.sh --upload
 ```
+
+Backups are stored in `/opt/proisdb/backups/` by default. Configure `BACKUP_DIR` and `KEEP_DAYS` in the script.
 
 ## Migration to New Server
 
 ```bash
 # On old server: export database
-sudo docker exec proisdb-mysql-1 mysqldump -u root -p proisdb_db > backup.sql
+sudo docker exec proISDB-mysql-1 mysqldump -u root -p proisdb_db > backup.sql
 
 # On new server: clone and deploy
 git clone https://github.com/webro-nuaa/proISDB.git
@@ -129,14 +180,28 @@ cp .env.example .env && nano .env
 sudo docker compose build
 sudo docker compose up -d mysql redis
 sleep 10
-sudo docker exec -i proisdb-mysql-1 mysql -u root -p proisdb_db < backup.sql
+sudo docker exec -i proISDB-mysql-1 mysql -u root -p proisdb_db < backup.sql
 sudo docker compose up -d
+```
+
+## CLI Commands
+
+```bash
+# Manage the app
+sudo docker compose exec web flask create-root     # Create root admin user
+sudo docker compose exec web flask init-db          # Initialize default configs
+sudo docker compose exec web flask reset-db         # Recreate all tables (--drop to wipe first)
+sudo docker compose exec web flask test             # Run test suite
 ```
 
 ## Testing
 
 ```bash
-sudo docker exec proisdb-web-1 python -m pytest tests/ -v
+# In the container
+sudo docker compose exec web python -m pytest tests/ -v
+
+# Or locally (needs Python 3.11+ and requirements.txt installed)
+python -m pytest tests/ -v
 ```
 
 ## Project Structure
@@ -163,7 +228,7 @@ blast_db/                # BLAST local databases
 config/                  # Environment configurations
 deploy/                  # Gunicorn & Nginx configs
 scripts/                 # Backup & deploy scripts
-tests/                   # pytest test suite
+tests/                   # pytest test suite (212 tests)
 ```
 
 ## License

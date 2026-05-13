@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.4.7, for Linux (x86_64)
 --
--- Host: localhost    Database: insertq_db
+-- Host: localhost    Database: proisdb_db
 -- ------------------------------------------------------
 -- Server version	8.4.7-0ubuntu0.25.10.3
 
@@ -21,8 +21,8 @@
 
 -- Ensure target database exists and switch to it
 -- Target database for destructive replace per user request
-CREATE DATABASE IF NOT EXISTS `insertq_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `insertq_db`;
+CREATE DATABASE IF NOT EXISTS `proisdb_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `proisdb_db`;
 
 --
 -- Table structure for table `admin_logs`
@@ -454,11 +454,11 @@ CREATE TABLE `users` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping events for database 'insertq_db'
+-- Dumping events for database 'proisdb_db'
 --
 
 --
--- Dumping routines for database 'insertq_db'
+-- Dumping routines for database 'proisdb_db'
 --
 
 --
