@@ -54,10 +54,12 @@ sudo docker compose up -d
 sudo docker compose exec web flask create-root
 
 # Verify
-curl http://localhost:5500/health
+curl http://localhost/health
 ```
 
-> **Note:** The web service binds to `127.0.0.1:5500` (localhost only). Set up a reverse proxy (Nginx) for external access. See `deploy/nginx.conf` for a reference config.
+The web service listens on port 80. Access at `http://your-server-ip` (or `http://localhost` locally).
+
+> For HTTPS, set up a reverse proxy (Nginx). See `deploy/nginx.conf` for a reference config.
 
 ### Configure .env
 
@@ -90,24 +92,25 @@ sudo docker compose exec web flask init-db
 
 ```
 Internet
-  └── Nginx (:80/:443, HTTPS) — runs on host
-        └── Flask/Gunicorn (127.0.0.1:5500, internal only) — Docker
-              ├── MySQL 8.4 (internal, no exposed port) — Docker
-              ├── Redis 7 (internal, no exposed port) — Docker
-              │     ├── DB 0: Celery broker
-              │     ├── DB 1: Cache
-              │     └── DB 2: Session
-              └── Celery Worker (BLAST tasks) — Docker
+  └── Flask/Gunicorn (:80) — Docker
+        ├── MySQL 8.4 (internal) — Docker
+        ├── Redis 7 (internal) — Docker
+        │     ├── DB 0: Celery broker
+        │     ├── DB 1: Cache
+        │     └── DB 2: Session
+        └── Celery Worker (BLAST tasks) — Docker
+
+  Optional: Nginx (:443, HTTPS) in front for SSL termination
 ```
 
 ## Services
 
-| Service | Host Port | Exposed | Purpose |
-|---------|-----------|---------|---------|
-| web | 5500 | localhost only | Flask application (Gunicorn) |
-| celery_worker | — | no | Async BLAST task processor |
-| mysql | 3306 | no | Database (internal Docker network) |
-| redis | 6379 | no | Cache, session store, Celery broker |
+| Service | Host Port | Purpose |
+|---------|-----------|---------|
+| web | 80 | Flask application (Gunicorn) |
+| celery_worker | — | Async BLAST task processor |
+| mysql | — (internal) | Database |
+| redis | — (internal) | Cache, session store, Celery broker |
 
 ## Development
 
@@ -121,9 +124,9 @@ The dev compose file:
 - Exposes MySQL on `127.0.0.1:3307` and Redis on `127.0.0.1:6380` for local tools
 - Disables Gunicorn preload so code changes take effect immediately
 
-## Nginx Setup
+## Nginx Setup (Optional HTTPS)
 
-A reference Nginx config is provided at `deploy/nginx.conf`. It proxies all requests to the Flask app on `127.0.0.1:5500` with HTTPS redirect and longer timeouts for BLAST result pages.
+For production HTTPS, a reference Nginx config is at `deploy/nginx.conf`. It terminates SSL and proxies to `127.0.0.1:5500` (change to port 80 if running behind Nginx).
 
 ```bash
 # Install and configure
