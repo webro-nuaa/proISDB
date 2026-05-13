@@ -712,7 +712,7 @@ class TestStatisticsAndMonitoring:
         assert 'database' in data
         assert 'redis' in data
         assert 'version' in data
-        assert data['version'] == '2.0.0'
+        assert data['version'] == '2.0.1'
 
     def test_homepage_shows_stats(self, client, sample_elements):
         """Homepage displays element count."""

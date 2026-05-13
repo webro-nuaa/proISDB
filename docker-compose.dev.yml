@@ -3,7 +3,7 @@ services:
     image: mysql:8.4
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-insertq_dev}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-proisdb_dev}
       MYSQL_DATABASE: ${MYSQL_DB:-proisdb_db}
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci

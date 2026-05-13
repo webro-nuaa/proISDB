@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-BLAST工具类 - 本地BLAST+调用和结果解析
+BLAST helper - local BLAST+ invocation and result parsing
 """
 import os
 import tempfile
@@ -10,7 +10,7 @@ from flask import current_app
 
 
 class BlastHelper:
-    """本地BLAST+工具类"""
+    """Local BLAST+ helper class"""
     
     def __init__(self, db_path=None):
         """
@@ -27,7 +27,7 @@ class BlastHelper:
         self.db_path = db_path
     
     def check_blast_installed(self):
-        """检查BLAST+是否已安装"""
+        """Check if BLAST+ is installed"""
         try:
             result = subprocess.run(
                 ['blastn', '-version'],
@@ -40,7 +40,7 @@ class BlastHelper:
             return False
     
     def check_database_exists(self):
-        """检查BLAST数据库是否存在"""
+        """Check if BLAST database exists"""
         # 检查至少一个数据库文件存在
         extensions = ['.nhr', '.nin', '.nsq']
         return any(
@@ -50,7 +50,7 @@ class BlastHelper:
     
     def run_blastn(self, query_sequence, evalue=10, max_hits=50, word_size=11):
         """
-        运行blastn核酸序列比对
+        Run blastn nucleotide alignment
         
         Args:
             query_sequence: 查询序列（FASTA格式或纯序列）
@@ -119,7 +119,7 @@ class BlastHelper:
     
     def run_blastp(self, query_sequence, evalue=10, max_hits=50):
         """
-        运行blastp蛋白序列比对
+        Run blastp protein alignment
         
         Args:
             query_sequence: 查询序列（FASTA格式或纯序列）
@@ -184,7 +184,7 @@ class BlastHelper:
     
     def _parse_blast_xml(self, xml_string):
         """
-        解析BLAST XML结果
+        Parse BLAST XML results
         
         Args:
             xml_string: BLAST输出的XML字符串
@@ -195,7 +195,7 @@ class BlastHelper:
         try:
             root = ET.fromstring(xml_string)
             
-            # 获取查询信息
+            # Get query info
             query_def = root.find('.//BlastOutput_query-def')
             query_len = root.find('.//BlastOutput_query-len')
             
@@ -205,13 +205,13 @@ class BlastHelper:
                 'hits': []
             }
             
-            # 解析所有hits
+            # Parse all hits
             for hit in root.findall('.//Hit'):
                 hit_id = hit.find('Hit_id').text
                 hit_def = hit.find('Hit_def').text
                 hit_len = int(hit.find('Hit_len').text)
                 
-                # 解析HSP (High-scoring Segment Pair)
+                # Parse HSP (High-scoring Segment Pair)
                 hsps = []
                 for hsp in hit.findall('.//Hsp'):
                     hsp_data = {
@@ -229,7 +229,7 @@ class BlastHelper:
                         'midline': hsp.find('Hsp_midline').text
                     }
                     
-                    # 计算百分比
+                    # Calculate percentages
                     hsp_data['identity_percent'] = round(
                         (hsp_data['identity'] / hsp_data['align_len']) * 100, 2
                     )
@@ -237,7 +237,7 @@ class BlastHelper:
                         (hsp_data['positive'] / hsp_data['align_len']) * 100, 2
                     )
                     
-                    # 计算覆盖度
+                    # Calculate coverage
                     hsp_data['query_coverage'] = round(
                         (abs(hsp_data['query_to'] - hsp_data['query_from']) + 1) / result['query_length'] * 100, 2
                     )
@@ -247,7 +247,7 @@ class BlastHelper:
                     
                     hsps.append(hsp_data)
                 
-                # 只取最佳HSP
+                # Take best HSP only
                 if hsps:
                     best_hsp = max(hsps, key=lambda x: x['score'])
                     result['hits'].append({

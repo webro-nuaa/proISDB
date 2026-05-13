@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-用户认证视图
+Authentication views
 """
 from datetime import datetime, timezone
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
@@ -13,12 +13,12 @@ auth = Blueprint('auth', __name__)
 
 @login_manager.user_loader
 def load_user(user_id):
-    """加载用户"""
+    """Load user"""
     return db.session.get(User, int(user_id))
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
-    """用户登录"""
+    """User login"""
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     
@@ -59,7 +59,7 @@ def login():
 @auth.route('/logout')
 @login_required
 def logout():
-    """用户登出"""
+    """User logout"""
     # 记录登出日志
     if current_user.has_admin_permission():
         AdminLog.log_action(
@@ -77,13 +77,13 @@ def logout():
 @auth.route('/profile')
 @login_required
 def profile():
-    """用户资料页面"""
+    """User profile page"""
     return render_template('auth/profile.html', user=current_user)
 
 @auth.route('/profile/edit', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
-    """编辑用户资料"""
+    """Edit profile"""
     form = ProfileForm(current_user)
     
     if form.validate_on_submit():
@@ -114,7 +114,7 @@ def edit_profile():
 @auth.route('/change-password', methods=['GET', 'POST'])
 @login_required
 def change_password():
-    """修改密码"""
+    """Change password"""
     form = ChangePasswordForm()
     
     if form.validate_on_submit():
@@ -142,8 +142,8 @@ def change_password():
 
 @auth.before_request
 def before_request():
-    """请求前处理"""
-    # 记录页面访问
+    """Before request handler"""
+    # Log page visit
     from app.models import PageView
     if request.endpoint and not request.endpoint.startswith('static') and not request.endpoint.startswith('auth.'):
         try:
@@ -153,13 +153,13 @@ def before_request():
                 request=request
             )
         except Exception as e:
-            # 记录日志但不影响页面访问
+            # Log error but do not block page access
             print(f"PageView记录失败: {e}")
 
 @auth.route('/verify-email', methods=['GET', 'POST'])
 @login_required
 def verify_email():
-    """邮箱验证页面"""
+    """Email verification page"""
     from app.forms.email_verification import SendVerificationCodeForm, VerifyEmailForm
     from app.models.email_verification import EmailVerification
     from app.utils.email_service import EmailService
@@ -167,7 +167,7 @@ def verify_email():
     send_form = SendVerificationCodeForm()
     verify_form = VerifyEmailForm()
     
-    # 处理发送验证码请求
+    # Handle send verification code
     if send_form.validate_on_submit() and request.form.get('action') == 'send':
         email = send_form.email.data
         
@@ -200,7 +200,7 @@ def verify_email():
         
         return redirect(url_for('auth.verify_email'))
     
-    # 处理验证码验证请求
+    # Handle verify code
     if verify_form.validate_on_submit() and request.form.get('action') == 'verify':
         # 从session获取邮箱
         email = session.get('verification_email')

@@ -17,7 +17,7 @@ def _require_env(key):
 
 
 class Config:
-    VERSION = '2.0.0'
+    VERSION = '2.0.1'
     SECRET_KEY = _require_env('SECRET_KEY')
 
     MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')

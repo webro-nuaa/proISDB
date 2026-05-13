@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-科普知识视图
+Knowledge base views
 """
 from datetime import datetime, timezone
 from flask import Blueprint, render_template, request, flash, redirect, url_for, abort, current_app, jsonify
@@ -23,12 +23,12 @@ def index():
         request=request
     )
     
-    # 获取分页参数
+    # Pagination parameters
     page = request.args.get('page', 1, type=int)
-    # 科普文章使用较小的分页数量，方便阅读
+    # Use smaller page size for knowledge articles
     per_page = current_app.config.get('SEARCH_RESULTS_PER_PAGE', 8)
     
-    # 获取所有已发布的文章
+    # Get all published articles
     articles = KnowledgeArticle.query.filter_by(status='published')\
                                     .order_by(KnowledgeArticle.published_at.desc())\
                                     .paginate(
@@ -59,7 +59,7 @@ def article_detail(slug):
     # 获取相关文章（基于共同标签或最新文章）
     related_articles = []
     if article.tags:
-        # 基于标签的相关文章
+        # Related articles by tag
         tag_ids = [tag.id for tag in article.tags]
         related_articles = db.session.query(KnowledgeArticle)\
                                     .join(KnowledgeArticle.tags)\
@@ -70,7 +70,7 @@ def article_detail(slug):
                                     .order_by(db.func.count(KnowledgeTag.id).desc())\
                                     .limit(4).all()
     
-    # 如果基于标签的相关文章不足，用最新文章补充
+    # Supplement with latest articles if not enough tag-based
     if len(related_articles) < 4:
         latest_articles = KnowledgeArticle.query\
                                          .filter(KnowledgeArticle.id != article.id,
@@ -79,14 +79,14 @@ def article_detail(slug):
                                          .limit(4 - len(related_articles)).all()
         related_articles.extend(latest_articles)
     
-    # 获取热门文章
+    # Popular articles
     popular_articles = KnowledgeArticle.query\
                                       .filter(KnowledgeArticle.id != article.id,
                                              KnowledgeArticle.status == 'published')\
                                       .order_by(KnowledgeArticle.view_count.desc())\
                                       .limit(5).all()
     
-    # 获取热门标签
+    # Popular tags
     popular_tags = db.session.query(KnowledgeTag)\
                             .join(KnowledgeArticle.tags)\
                             .filter(KnowledgeArticle.status == 'published')\
@@ -120,7 +120,7 @@ def tag_articles(tag_name):
                                   error_out=False
                               )
     
-    # 获取热门标签
+    # Popular tags
     popular_tags = db.session.query(KnowledgeTag)\
                             .join(KnowledgeArticle.tags)\
                             .filter(KnowledgeArticle.status == 'published')\
@@ -128,7 +128,7 @@ def tag_articles(tag_name):
                             .order_by(db.func.count(KnowledgeArticle.id).desc())\
                             .limit(10).all()
     
-    # 获取最新文章
+    # Get recent articles
     recent_articles = KnowledgeArticle.query\
                                      .filter(KnowledgeArticle.status == 'published')\
                                      .order_by(KnowledgeArticle.published_at.desc())\
@@ -140,7 +140,7 @@ def tag_articles(tag_name):
                          popular_tags=popular_tags,
                          recent_articles=recent_articles)
 
-# 管理员功能
+# Admin features
 @knowledge.route('/admin')
 @login_required
 def admin_index():
@@ -149,7 +149,7 @@ def admin_index():
         flash('You do not have permission to access this page.', 'error')
         return redirect(url_for('knowledge.index'))
     
-    # 获取统计数据
+    # Get statistics
     stats = {
         'total_articles': KnowledgeArticle.query.count(),
         'published_articles': KnowledgeArticle.query.filter_by(status='published').count(),
@@ -158,7 +158,7 @@ def admin_index():
         'total_tags': KnowledgeTag.query.count()
     }
     
-    # 获取最新文章
+    # Get recent articles
     recent_articles = KnowledgeArticle.query\
                                      .order_by(KnowledgeArticle.created_at.desc())\
                                      .limit(10).all()

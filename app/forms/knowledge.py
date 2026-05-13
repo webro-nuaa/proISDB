@@ -9,7 +9,7 @@ from wtforms.validators import DataRequired, Length, Optional, URL, ValidationEr
 from wtforms.widgets import TextArea
 
 def safe_int_coerce(value):
-    """安全的整数转换函数"""
+    """Safe integer coercion"""
     if value == '' or value is None:
         return None
     try:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-API视图
+API views
 """
 from flask import Blueprint, request, jsonify, render_template
 from flask_login import login_required
@@ -9,13 +9,13 @@ api = Blueprint('api', __name__, url_prefix='/api')
 
 @api.route('/')
 def index():
-    """API文档首页"""
+    """API documentation home"""
     return render_template('api/index.html')
 
 @api.route('/preview-markdown', methods=['POST'])
 @login_required
 def preview_markdown():
-    """Markdown预览API"""
+    """Markdown preview API"""
     try:
         content = request.form.get('content', '')
         if not content:
@@ -42,7 +42,7 @@ def preview_markdown():
 
 @api.route('/families')
 def get_families():
-    """获取IS家族列表API"""
+    """Get IS family list API"""
     try:
         from app.models import ISElement
         families = ISElement.get_families()

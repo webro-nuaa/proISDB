@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-管理员视图
+Admin views.
 """
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, jsonify
 from flask_login import login_required, current_user, login_user
 
@@ -18,7 +18,7 @@ admin = Blueprint('admin', __name__)
 
 @admin.route('/login', methods=['GET', 'POST'])
 def login():
-    """管理员独立登录页面"""
+    """Admin standalone login page."""
     if current_user.is_authenticated and current_user.has_admin_permission():
         return redirect(url_for('admin.index'))
     
@@ -31,7 +31,7 @@ def login():
             if user.has_admin_permission():
                 login_user(user, remember=form.remember_me.data)
                 
-                # 记录管理员登录
+                # Record admin login
                 AdminLog.log_action(
                     user=user,
                     action='admin_login',
@@ -54,12 +54,12 @@ def login():
 @admin.route('/')
 @login_required
 def index():
-    """管理员首页"""
+    """Admin dashboard."""
     if not current_user.has_admin_permission():
         flash('您没有权限访问此页面。', 'error')
         return redirect(url_for('admin.login'))
-    
-    # 获取统计数据
+
+    # Gather statistics
     stats = {
         'total_elements': ISElement.query.count(),
         'pending_elements': ISElement.query.filter_by(status='pending').count(),
@@ -70,32 +70,31 @@ def index():
         'total_users': User.query.count(),
         'admin_users': User.query.filter_by(role='admin').count()
     }
-    
-    # 获取最新提交
+
+    # Recent pending submissions
     recent_submissions = ISElement.query.filter_by(status='pending')\
                                        .order_by(ISElement.submission_date.desc())\
                                        .limit(5).all()
-    
-    # 获取最新文章
+
+    # Recent articles
     recent_articles = KnowledgeArticle.query\
                                      .order_by(KnowledgeArticle.created_at.desc())\
                                      .limit(5).all()
-    
-    # 获取今日页面访问统计
+
+    # Today's page views
     today = datetime.now(timezone.utc).date()
     today_views = PageView.query.filter(
         db.func.date(PageView.created_at) == today
     ).count()
     
-    # 获取最近7天的访问趋势
+    # Access trends for the past 7 days
     from sqlalchemy import func
-    import datetime as dt
-    
+
     week_views = db.session.query(
         func.date(PageView.created_at).label('date'),
         func.count(PageView.id).label('count')
     ).filter(
-        PageView.created_at >= datetime.now(timezone.utc) - dt.timedelta(days=7)
+        PageView.created_at >= datetime.now(timezone.utc) - timedelta(days=7)
     ).group_by(
         func.date(PageView.created_at)
     ).order_by('date').all()
@@ -110,33 +109,29 @@ def index():
 @admin.route('/is-elements')
 @login_required
 def is_elements():
-    """IS元素数据管理"""
+    """IS Element data management."""
     if not current_user.has_admin_permission():
         flash('You do not have permission to access this page.', 'error')
         return redirect(url_for('admin.login'))
-    
-    # 检查是否是高级搜索
+
     is_advanced = request.args.get('advanced') == '1'
-    
-    # 获取搜索和筛选参数
+
     search = request.args.get('search', '').strip()
     status = request.args.get('status', '')
     family = request.args.get('family', '')
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
-    
-    # 限制每页数量
+
     if per_page not in [10, 20, 50, 100]:
         per_page = 20
-    
-    # 构建查询
+
     query = ISElement.query
     
     if is_advanced:
-        # 高级搜索逻辑
+        # Advanced search
         search_params = {}
         
-        # IS Name搜索
+        # IS Name search
         name = request.args.get('name', '').strip()
         name_match = request.args.get('name_match', 'contains')
         if name:
@@ -152,7 +147,7 @@ def is_elements():
             elif name_match == 'equal_to':
                 query = query.filter(ISElement.name == name)
         
-        # IS Family搜索
+        # IS Family search
         family_field = request.args.get('family_field', '').strip()
         family_match = request.args.get('family_match', 'contains')
         if family_field:
@@ -168,7 +163,7 @@ def is_elements():
             elif family_match == 'equal_to':
                 query = query.filter(ISElement.family == family_field)
         
-        # Origin搜索
+        # Origin search
         origin = request.args.get('origin', '').strip()
         origin_match = request.args.get('origin_match', 'contains')
         if origin:
@@ -184,7 +179,7 @@ def is_elements():
             elif origin_match == 'equal_to':
                 query = query.filter(ISElement.origin == origin)
         
-        # MGE Type搜索
+        # MGE Type search
         mge_type = request.args.get('mge_type', '').strip()
         mge_type_match = request.args.get('mge_type_match', 'contains')
         if mge_type:
@@ -200,12 +195,12 @@ def is_elements():
             elif mge_type_match == 'equal_to':
                 query = query.filter(ISElement.mge_type == mge_type)
         
-        # Status筛选
+        # Status filter
         if status:
             search_params['status'] = status
             query = query.filter(ISElement.status == status)
         
-        # Host搜索
+        # Host search
         host = request.args.get('host', '').strip()
         if host:
             search_params['host'] = host
@@ -216,7 +211,7 @@ def is_elements():
             search_params['accession'] = accession
             query = query.filter(ISElement.accession_number.contains(escape_like(accession)))
         
-        # Length搜索 (蛋白质长度)
+        # Length search (protein length)
         length_field = request.args.get('length_field', '').strip()
         length_match = request.args.get('length_match', 'equal_to')
         if length_field:
@@ -231,13 +226,13 @@ def is_elements():
                 elif length_match == 'lte':
                     query = query.filter(ISElement.length <= length_value)
             except ValueError:
-                pass  # 忽略无效的数字输入
+                pass
         
-        # 保存 per_page 到 search_params
+        
         search_params['per_page'] = per_page
         
     else:
-        # 简单搜索逻辑
+        # Simple search
         search_params = {}
         if search:
             safe_search = escape_like(search)
@@ -273,28 +268,28 @@ def is_elements():
         if family:
             query = query.filter(ISElement.family == family)
     
-    # 分页查询
+    # Paginate
     elements = query.order_by(ISElement.id.desc()).paginate(
         page=page,
         per_page=per_page,
         error_out=False
     )
     
-    # 获取可用的家族列表
+    # Available families
     available_families = db.session.query(ISElement.family).filter(
         ISElement.family.isnot(None), 
         ISElement.family != ''
     ).distinct().all()
     available_families = [f[0] for f in available_families]
     
-    # 计算统计信息
+    # Stats
     stats = {
         'approved': ISElement.query.filter_by(status='approved').count(),
         'pending': ISElement.query.filter_by(status='pending').count(),
         'rejected': ISElement.query.filter_by(status='rejected').count()
     }
     
-    # 创建删除表单实例
+    # Delete form instance
     delete_form = DeleteForm()
     
     return render_template('admin/is_elements.html', 
@@ -335,7 +330,7 @@ def import_is_elements():
         nonlocal success_count, error_count
         try:
             # For the new version we require CSV/Excel headers to match the database column names exactly.
-            # Use only the exact column names from insertq_db.sql (lower-cased).
+            # Use only the exact column names from the SQL schema (lower-cased).
             
             def to_int(val):
                 if val is None or str(val).strip() == '':
@@ -492,7 +487,7 @@ def add_is_element():
         flash('您没有权限访问此页面。', 'error')
         return redirect(url_for('admin.login'))
     
-    # 检查管理员信息是否完整
+    # Check that admin profile is complete
     if not current_user.first_name or not current_user.last_name or not current_user.email or not current_user.institution or not current_user.country:
         flash('请先完善个人资料（姓名、邮箱、机构、国家）后再提交数据。', 'warning')
         return redirect(url_for('auth.profile'))
@@ -500,7 +495,7 @@ def add_is_element():
     from app.forms.submission import ISElementSubmissionForm
     form = ISElementSubmissionForm()
     
-    # 在GET请求时，自动填充管理员信息
+    # Pre-fill admin info on GET
     if not form.is_submitted():
         form.first_name.data = current_user.first_name
         form.last_name.data = current_user.last_name
@@ -513,7 +508,7 @@ def add_is_element():
     if form.validate_on_submit():
         element = ISElement()
         
-        # 手动设置IS元素字段
+        # IS element fields
         element.name = form.name.data
         element.family = form.family.data
         element.group = form.group.data
@@ -523,13 +518,13 @@ def add_is_element():
         element.origin = form.origin.data
         element.transposition = form.transposition.data
         element.is_length = form.is_length.data
-        # left_flank 和 right_flank 是 @property，从 is_sequence 推断，不能直接设置
+        # left_flank/right_flank are read-only @property, inferred from is_sequence
         element.le_cleavage_site = form.le_cleavage_site.data
         element.re_cleavage_site = form.re_cleavage_site.data
         element.is_sequence = form.is_sequence.data
         element.orf_number = form.orf_number.data
         
-        # ORF1 字段
+        # ORF1 fields
         element.orf_1 = form.orf_1.data
         element.orf_1_length = form.orf_1_length.data
         element.orf_1_begin = form.orf_1_begin.data
@@ -540,7 +535,7 @@ def add_is_element():
         element.orf_1_chemistry = form.orf_1_chemistry.data
         element.orf_1_sequence = form.orf_1_sequence.data
         
-        # ORF2 字段
+        # ORF2 fields
         element.orf_2 = form.orf_2.data
         element.orf_2_length = form.orf_2_length.data
         element.orf_2_begin = form.orf_2_begin.data
@@ -551,7 +546,7 @@ def add_is_element():
         element.orf_2_chemistry = form.orf_2_chemistry.data
         element.orf_2_sequence = form.orf_2_sequence.data
         
-        # 其他字段
+        # Other fields
         element.orf1 = form.orf1.data
         element.orf2 = form.orf2.data
         element.tam = form.tam.data
@@ -563,7 +558,7 @@ def add_is_element():
         element.comment = form.comment.data
         element.references = form.references.data
         
-        # 手动设置submitter_字段 - 强制使用当前管理员的profile信息
+        # Force submitter fields from current admin profile
         element.submitter_first_name = current_user.first_name
         element.submitter_last_name = current_user.last_name
         element.submitter_institution = current_user.institution
@@ -574,8 +569,8 @@ def add_is_element():
         element.submitter_email = current_user.email
         element.submitter_telephone = current_user.telephone
         
-        # 设置管理员添加的特殊状态
-        element.status = 'approved'  # 管理员直接添加的数据自动通过
+        # Admin-added entries are auto-approved
+        element.status = 'approved'
         element.submitter_id = current_user.id
         element.submission_date = datetime.now(timezone.utc)
         
@@ -583,7 +578,7 @@ def add_is_element():
             db.session.add(element)
             db.session.commit()
             
-            # 记录操作日志
+            # Audit log
             AdminLog.log_action(
                 user=current_user,
                 action='create_is_element',
@@ -618,11 +613,11 @@ def edit_is_element(id):
     form = AdminISElementForm(obj=element)
     
     if form.validate_on_submit():
-        # 保存修改前的数据用于日志
+        # Save old data for audit log
         old_data = element.to_dict()
         
-        # 手动更新数据，跳过只读属性
-        excluded_fields = ['left_flank', 'right_flank']  # 这些是只读的 @property
+        # Update fields, skip read-only properties
+        excluded_fields = ['left_flank', 'right_flank']  # read-only @property
         for field_name, field in form._fields.items():
             if field_name not in ['csrf_token', 'submit'] and field_name not in excluded_fields:
                 if hasattr(element, field_name):
@@ -633,7 +628,7 @@ def edit_is_element(id):
         try:
             db.session.commit()
             
-            # 记录操作日志
+            # Audit log
             AdminLog.log_action(
                 user=current_user,
                 action='edit_is_element',
@@ -653,7 +648,7 @@ def edit_is_element(id):
             db.session.rollback()
             flash(f'更新失败：{str(e)}', 'error')
     
-    # 创建删除表单实例
+    # Delete form instance
     delete_form = DeleteForm()
     
     return render_template('admin/is_element_form.html', 
@@ -671,7 +666,7 @@ def delete_is_element(id):
         flash('您没有权限访问此页面。', 'error')
         return redirect(url_for('admin.login'))
     
-    # 验证CSRF令牌
+    # Validate CSRF token
     form = DeleteForm()
     if not form.validate_on_submit():
         flash('删除失败：安全验证未通过。', 'error')
@@ -682,7 +677,7 @@ def delete_is_element(id):
     try:
         element_name = element.name
         
-        # 记录删除日志
+        # Record deletion log
         log = AdminLog(
             user_id=current_user.id,
             action='delete_is_element',
@@ -694,7 +689,7 @@ def delete_is_element(id):
         )
         db.session.add(log)
         
-        # 删除元素
+        # Delete the element
         db.session.delete(element)
         db.session.commit()
         
@@ -704,7 +699,7 @@ def delete_is_element(id):
         db.session.rollback()
         current_app.logger.error(f'删除IS元素失败: {str(e)}', exc_info=True)
         
-        # 根据错误类型提供具体的错误信息
+        # Specific error messages by error type
         if 'IntegrityError' in str(e):
             if 'cannot be null' in str(e):
                 flash('删除失败：存在相关联的数据记录，请先处理相关数据。', 'error')
@@ -721,24 +716,22 @@ def delete_is_element(id):
 @login_required
 def batch_action():
     """批量操作IS元素"""
-    from flask import jsonify
-    
     if not current_user.has_admin_permission():
         return jsonify({'success': False, 'message': '没有权限'}), 403
     
     action = request.form.get('action')
     comment = request.form.get('comment', '')
     
-    # 获取ID列表，支持多种格式
+    # Get ID list, support various formats
     ids = request.form.getlist('ids')
     if not ids:
-        # 尝试获取数组格式的IDs
+        # Try array-format IDs
         ids = []
         for key in request.form.keys():
             if key.startswith('ids['):
                 ids.append(request.form.get(key))
     
-    # 调试日志
+    # Debug logging
     current_app.logger.info(f'批量操作请求: action={action}, ids={ids}, comment={comment}')
     current_app.logger.info(f'请求表单数据: {dict(request.form)}')
     current_app.logger.info(f'所有表单键: {list(request.form.keys())}')
@@ -748,7 +741,7 @@ def batch_action():
         return jsonify({'success': False, 'message': f'参数不完整: action={action}, ids={ids}'}), 400
     
     try:
-        # 验证ID列表
+        # Validate IDs
         element_ids = [int(id) for id in ids]
         elements = ISElement.query.filter(ISElement.id.in_(element_ids)).all()
         
@@ -760,7 +753,7 @@ def batch_action():
         for element in elements:
             try:
                 if action in ['approve', 'pending', 'reject']:
-                    # 状态更新操作
+                    # Status update operations
                     old_status = element.status
                     if action == 'approve':
                         element.status = 'approved'
@@ -769,7 +762,7 @@ def batch_action():
                     elif action == 'reject':
                         element.status = 'rejected'
                     
-                    # 记录操作日志
+                    # Audit log
                     log = AdminLog(
                         user_id=current_user.id,
                         action=f'batch_{action}_is_element',
@@ -788,7 +781,7 @@ def batch_action():
                     success_count += 1
                     
                 elif action == 'delete':
-                    # 删除操作
+                    # Deletion operation
                     element_name = element.name
                     log = AdminLog(
                         user_id=current_user.id,
@@ -847,7 +840,7 @@ def batch_export():
         import io
         from datetime import datetime, timezone
         
-        # 验证ID列表
+        # Validate IDs
         element_ids = [int(id) for id in ids]
         elements = ISElement.query.filter(ISElement.id.in_(element_ids)).all()
         
@@ -976,7 +969,7 @@ def view_is_element(id):
     
     element = ISElement.query.get_or_404(id)
     
-    # 渲染详情HTML片段
+    # Render detail HTML fragment
     return render_template('admin/is_element_detail.html', element=element)
 
 @admin.route('/is-element/<int:id>/view')
@@ -989,7 +982,7 @@ def is_element_view(id):
     
     element = ISElement.query.get_or_404(id)
     
-    # 使用admin专用的详情页面模板
+    # Admin detail page template
     return render_template('admin/is_element_view.html', element=element)
 
 
@@ -1137,7 +1130,7 @@ def create_admin_user():
             db.session.add(admin_user)
             db.session.commit()
             
-            # 记录操作日志
+            # Audit log
             AdminLog.log_action(
                 user=current_user,
                 action='create_admin',
@@ -1182,7 +1175,7 @@ def disable_admin(admin_id):
     try:
         db.session.commit()
         
-        # 记录操作日志
+        # Audit log
         AdminLog.log_action(
             user=current_user,
             action='disable_admin',
@@ -1218,7 +1211,7 @@ def enable_admin(admin_id):
     try:
         db.session.commit()
         
-        # 记录操作日志
+        # Audit log
         AdminLog.log_action(
             user=current_user,
             action='enable_admin',
@@ -1269,7 +1262,7 @@ def delete_admin(admin_id):
     username = admin_user.username
     
     try:
-        # 记录操作日志（在删除前记录）
+        # Audit log（在删除前记录）
         AdminLog.log_action(
             user=current_user,
             action='delete_admin',
@@ -1596,7 +1589,7 @@ proISDB Team
     
     # 附加文件
     msg.attach(
-        filename=f'insertq_data_{download_req.id}.{file_extension}',
+        filename=f'proisdb_data_{download_req.id}.{file_extension}',
         content_type=content_type,
         data=file_data
     )

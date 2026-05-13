@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-邮件发送服务 - 统一使用 Flask-Mail
+Email sending service - uses Flask-Mail
 """
 from flask import current_app
 from flask_mail import Message
 from app import mail
 
 class EmailService:
-    """邮件发送服务类 - 使用 Flask-Mail 统一发送邮件"""
+    """Email sending service class using Flask-Mail"""
     
     @staticmethod
     def send_verification_code(to_email, verification_code, purpose='email_change', username=None):
-        """发送验证码邮件"""
+        """Send verification code email"""
         try:
             # 清理邮箱地址
             to_email = to_email.strip()
@@ -44,12 +44,12 @@ class EmailService:
             return True, '验证码已发送'
         
         except Exception as e:
-            current_app.logger.error(f'发送验证码邮件失败: {str(e)}')
+            current_app.logger.error(f'Send verification code email失败: {str(e)}')
             return False, f'发送失败: {str(e)}'
     
     @staticmethod
     def _get_verification_email_template(username, code, purpose='verify'):
-        """获取验证码邮件模板"""
+        """Get verification email template"""
         return f"""
 <!DOCTYPE html>
 <html lang="en">

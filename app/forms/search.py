@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-搜索相关表单
+Search forms
 """
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, IntegerField
 from wtforms.validators import Length, NumberRange, Optional
 
 class SearchForm(FlaskForm):
-    """搜索表单"""
+    """Search form"""
     query = StringField('搜索关键词', validators=[
         Length(0, 200, message='搜索关键词长度不能超过200个字符')
     ])
@@ -32,7 +32,7 @@ class SearchForm(FlaskForm):
         self.family.choices = [('', '全部')] + [(f[0], f[0]) for f in families]
 
 class AdvancedSearchForm(FlaskForm):
-    """高级搜索表单"""
+    """高级Search form"""
     # 搜索字段
     name = StringField('IS元素名称', validators=[
         Length(0, 100, message='名称长度不能超过100个字符')

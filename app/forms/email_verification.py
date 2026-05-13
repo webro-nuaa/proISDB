@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-邮箱验证表单
+Email verification forms
 """
 from flask_wtf import FlaskForm
 from wtforms import StringField, HiddenField
@@ -8,7 +8,7 @@ from wtforms.validators import DataRequired, Email, Length, ValidationError
 from app.models import User
 
 class SendVerificationCodeForm(FlaskForm):
-    """发送验证码表单"""
+    """Send verification code form"""
     email = StringField('Email', validators=[
         DataRequired(message='请输入邮箱地址'),
         Email(message='邮箱格式不正确')
@@ -25,7 +25,7 @@ class SendVerificationCodeForm(FlaskForm):
             raise ValidationError('该邮箱已被其他用户使用')
 
 class VerifyEmailForm(FlaskForm):
-    """验证邮箱表单 - 只需要验证码"""
+    """Verify email form"""
     verification_code = StringField('Verification Code', validators=[
         DataRequired(message='请输入验证码'),
         Length(min=6, max=6, message='验证码为6位数字')

@@ -1,36 +1,36 @@
 # -*- coding: utf-8 -*-
 """
-IS元素模型
+IS Element model
 """
 from datetime import datetime, timezone
 from app import db
 
 class ISElement(db.Model):
-    """IS元素模型"""
+    """IS Element model"""
     __tablename__ = 'is_elements'
     
     id = db.Column(db.Integer, primary_key=True)
-    # 基于示例数据生成的核心字段
+    # Core fields
     name = db.Column(db.String(64), nullable=False, comment='IS元素名称')
     family = db.Column(db.String(64), nullable=False, comment='IS家族')
-    # 直接映射数据库列名 `group`（不保留兼容别名）
+    # Map to database column `group`
     group = db.Column('group', db.String(64), comment='IS组')
     mge_type = db.Column(db.String(64), comment='MGE类型')
     related_element_s = db.Column(db.String(255), comment='相关元素')
     isoform = db.Column(db.String(255), comment='同型')
-    # 使用最新、规范的同义词列 `synomyns`
+    # Standard synonyms column
     synomyns = db.Column('synomyns', db.String(255), comment='标准同义词')
-    # 短名 iso 列（SQL 中存在）
+    # Short name / iso column (present in SQL)
     iso = db.Column('iso', db.String(255), comment='短名 / iso')
-    # 额外的备用/扩展字段（按最新 schema）
+    # Additional/extension fields per latest schema
     accession_number = db.Column(db.String(64), comment='登录号')
     transposition = db.Column(db.String(255), comment='转座情况')
     origin = db.Column(db.String(80), comment='来源')
     host = db.Column(db.String(64), comment='宿主')
     is_length = db.Column(db.Integer, comment='IS长度')
-    # 新的数据库结构可能未包含 explicit 的 left_flank/right_flank 列。
-    # 为兼容旧代码，保留属性接口，但将 left_flank/right_flank 作为只读属性从 dna_sequence 中推断（如果可能），否则返回 None。
-    # cleavage site 在新表中存在，直接映射。
+    # left_flank/right_flank are not explicit columns in the current schema.
+    # Retain as read-only @property, inferred from is_sequence if available.
+    # Cleavage sites exist as explicit columns.
     le_cleavage_site = db.Column(db.String(64), comment='LE切割位点')
     re_cleavage_site = db.Column(db.String(64), comment='RE切割位点')
     tam = db.Column(db.String(64), comment='TAM')
@@ -48,12 +48,12 @@ class ISElement(db.Model):
         if seq:
             return seq[-50:]
         return None
-    # 序列字段
+    # Sequence fields
     is_sequence = db.Column(db.Text, comment='IS序列')
     orf_number = db.Column(db.Integer, comment='ORF数量')
-    # 保留旧的简单 orf / length 字段
+    # Legacy simple ORF / length fields
     length = db.Column(db.Integer, comment='长度')
-    # ORF 详细字段，来自示例表
+    # Detailed ORF fields from schema
     orf_1 = db.Column(db.Integer, comment='ORF 1')
     orf_1_length = db.Column(db.Integer, comment='ORF 1 长度')
     orf_1_begin = db.Column(db.Integer, comment='ORF 1 开始')
@@ -72,14 +72,14 @@ class ISElement(db.Model):
     orf_2_function = db.Column(db.String(64), comment='ORF 2 功能')
     orf_2_chemistry = db.Column(db.String(64), comment='ORF 2 Chemistry')
     orf_2_sequence = db.Column(db.Text, comment='ORF 2 序列')
-    # SQL 中同时存在无下划线的 orf1/orf2（varchar），与 orf_1/orf_2（int）不同，保留两组字段
+    # Both orf1/orf2 (varchar) and orf_1/orf_2 (int) exist; keep both
     orf1 = db.Column('orf1', db.String(64), comment='ORF1 (短名)')
     orf2 = db.Column('orf2', db.String(64), comment='ORF2 (短名)')
-    # comment/references 使用 Text 存储较大文本
+    # comment/references use Text for larger content
     comment = db.Column(db.Text, comment='备注')
     references = db.Column(db.Text, comment='参考文献')
     
-    # 提交者个人信息
+    # Submitter personal info
     submitter_first_name = db.Column(db.String(50), comment='提交者姓')
     submitter_last_name = db.Column(db.String(50), comment='提交者名')
     submitter_institution = db.Column(db.String(200), comment='提交者机构')
@@ -90,7 +90,7 @@ class ISElement(db.Model):
     submitter_email = db.Column(db.String(200), comment='提交者电子邮箱')
     submitter_telephone = db.Column(db.String(50), comment='提交者电话')
     
-    # 数据管理字段
+    # Data management fields
     status = db.Column(db.Enum('pending', 'approved', 'rejected'), 
                       default='pending', comment='审核状态')
     submitter_id = db.Column(db.Integer, db.ForeignKey('users.id'), comment='提交者ID')
@@ -101,7 +101,7 @@ class ISElement(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
-    # 关联关系（submitter 和 reviewer 通过 User 模型中的 backref 定义）
+    # Relationships defined via User model backrefs
     submission_histories = db.relationship('SubmissionHistory', backref='is_element', lazy='dynamic', cascade='all, delete-orphan')
     
     def __repr__(self):

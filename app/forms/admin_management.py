@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Admin管理相关表单
+Admin management forms
 """
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField
@@ -8,7 +8,7 @@ from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationE
 from app.models import User
 
 class CreateAdminForm(FlaskForm):
-    """创建管理员表单"""
+    """Create admin form"""
     username = StringField('Username', validators=[
         DataRequired(message='Username is required'),
         Length(min=3, max=50, message='Username must be 3-50 characters')
@@ -33,11 +33,11 @@ class CreateAdminForm(FlaskForm):
     country = StringField('Country', validators=[Length(max=100)])
     
     def validate_username(self, field):
-        """验证用户名是否已存在"""
+        """Validate username uniqueness"""
         if User.query.filter_by(username=field.data).first():
             raise ValidationError('Username already exists')
     
     def validate_email(self, field):
-        """验证邮箱是否已存在"""
+        """Validate email uniqueness"""
         if field.data and User.query.filter_by(email=field.data).first():
             raise ValidationError('Email already exists')

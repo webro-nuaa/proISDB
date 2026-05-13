@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-搜索功能视图
+Search functionality views
 """
 from flask import Blueprint, render_template, request, jsonify, current_app, flash, redirect, url_for
 from flask_login import current_user, login_required
@@ -287,7 +287,7 @@ def apply_download():
             department=form.department.data.strip() if form.department.data else None,
             country=form.country.data.strip(),
             reason=form.reason.data.strip(),
-            format=form.format.data or 'csv',  # 保存导出格式
+            format=form.format.data or 'csv',  # Save export format
             assigned_admin_id=form.assigned_admin.data,
             status='pending',
             user_id=current_user.id if current_user.is_authenticated else None

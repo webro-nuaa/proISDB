@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-认证相关表单
+Authentication forms
 """
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, TextAreaField, SelectField

@@ -255,13 +255,10 @@ def _run_blast_impl(sequence, blast_type, evalue, max_hits, word_size):
     return {'error': f'Unsupported BLAST type: {blast_type}'}
 
 
-try:
-    from celery_worker import celery
+from celery_worker import celery
 
-    @celery.task(bind=True, time_limit=120, soft_time_limit=100)
-    def run_blast_task(self, sequence, blast_type, evalue, max_hits, word_size):
-        self.update_state(state='STARTED', meta={'status': 'Running BLAST...'})
-        return _run_blast_impl(sequence, blast_type, evalue, max_hits, word_size)
-except Exception:
-    def run_blast_task(**kwargs):
-        return _run_blast_impl(**kwargs)
+
+@celery.task(bind=True, time_limit=120, soft_time_limit=100)
+def run_blast_task(self, sequence, blast_type, evalue, max_hits, word_size):
+    self.update_state(state='STARTED', meta={'status': 'Running BLAST...'})
+    return _run_blast_impl(sequence, blast_type, evalue, max_hits, word_size)

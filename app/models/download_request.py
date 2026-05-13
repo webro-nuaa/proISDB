@@ -17,7 +17,7 @@ class DownloadRequest(db.Model):
     department = db.Column(db.String(200), nullable=True)
     country = db.Column(db.String(100), nullable=False)
     reason = db.Column(db.Text, nullable=False)
-    format = db.Column(db.String(10), default='csv', nullable=False)  # 导出格式: csv 或 fasta
+    format = db.Column(db.String(10), default='csv', nullable=False)  # Export format: csv or fasta
     assigned_admin_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     status = db.Column(db.Enum('pending','approved','rejected', name='download_status'), default='pending')

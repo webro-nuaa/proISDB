@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-文章图片关联模型
+Article image association model
 """
 from datetime import datetime, timezone
 from app import db
 
 class ArticleImage(db.Model):
-    """文章图片关联表"""
+    """Article image association table"""
     __tablename__ = 'article_images'
     
     id = db.Column(db.Integer, primary_key=True)

@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import re
 
 def truncate_text(text, length=100, suffix='...'):
-    """截断文本"""
+    """Truncate text"""
     if not text:
         return ''
     
@@ -16,7 +16,7 @@ def truncate_text(text, length=100, suffix='...'):
     return text[:length - len(suffix)] + suffix
 
 def datetime_format(value, format='%Y-%m-%d %H:%M'):
-    """格式化日期时间"""
+    """Format datetime"""
     if not value:
         return ''
     
@@ -26,7 +26,7 @@ def datetime_format(value, format='%Y-%m-%d %H:%M'):
     return value.strftime(format)
 
 def timeago(value):
-    """相对时间显示"""
+    """Relative time display"""
     if not value:
         return ''
     
@@ -45,7 +45,7 @@ def timeago(value):
         return "刚刚"
 
 def highlight_search(text, terms):
-    """高亮搜索词"""
+    """Highlight search terms"""
     if not text or not terms:
         return text
     
@@ -68,7 +68,7 @@ def highlight_search(text, terms):
     return highlighted
 
 def format_file_size(size_bytes):
-    """格式化文件大小"""
+    """Format file size"""
     if not size_bytes:
         return "0B"
     
@@ -80,14 +80,14 @@ def format_file_size(size_bytes):
     return f"{s} {size_names[i]}"
 
 def pluralize(count, singular, plural=None):
-    """复数形式"""
+    """Pluralize"""
     if plural is None:
         plural = singular + 's'
     
     return singular if count == 1 else plural
 
 def markdown_to_html(text):
-    """完整的Markdown转HTML处理"""
+    """Full Markdown to HTML conversion"""
     if not text:
         return ''
     
@@ -96,11 +96,11 @@ def markdown_to_html(text):
         result = markdown_processor.convert(text)
         return result['html']
     except ImportError:
-        # 回退到简单处理
+        # Fallback to simple processing
         return simple_markdown_to_html(text)
 
 def simple_markdown_to_html(text):
-    """简单的Markdown转HTML（回退方案）"""
+    """Simple Markdown to HTML (fallback)"""
     if not text:
         return ''
     
@@ -124,7 +124,7 @@ def simple_markdown_to_html(text):
     return text
 
 def markdown_to_text(text):
-    """Markdown转纯文本摘要"""
+    """Markdown to plain text summary"""
     if not text:
         return ''
     
@@ -132,11 +132,11 @@ def markdown_to_text(text):
         from app.utils.markdown_helper import markdown_processor
         return markdown_processor.get_text_summary(text)
     except ImportError:
-        # 回退处理
+        # Fallback handling
         return clean_html(simple_markdown_to_html(text))
 
 def clean_html(text):
-    """清理HTML标签"""
+    """Clean HTML tags"""
     if not text:
         return ''
     
@@ -145,7 +145,7 @@ def clean_html(text):
     return re.sub(clean, '', text)
 
 def format_number(value, decimal_places=0):
-    """格式化数字"""
+    """Format number"""
     if not isinstance(value, (int, float)):
         return value
     
@@ -155,7 +155,7 @@ def format_number(value, decimal_places=0):
         return f"{value:,.{decimal_places}f}"
 
 def status_badge(status):
-    """状态徽章"""
+    """Status badge"""
     badges = {
         'pending': '<span class="badge bg-warning">待审核</span>',
         'approved': '<span class="badge bg-success">已通过</span>',
@@ -168,7 +168,7 @@ def status_badge(status):
     return badges.get(status, f'<span class="badge bg-light text-dark">{status}</span>')
 
 def user_avatar(user, size=32):
-    """用户头像"""
+    """User avatar"""
     if not user:
         return f'<div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center" style="width:{size}px;height:{size}px;"><i class="fas fa-user text-white"></i></div>'
     
@@ -182,7 +182,7 @@ def user_avatar(user, size=32):
     return f'<div class="rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold" style="width:{size}px;height:{size}px;background-color:#{color};">{initial}</div>'
 
 def build_page_url(page):
-    """构造当前页面新的分页URL，保留其它查询参数"""
+    """Build pagination URL preserving query params"""
     try:
         from flask import request, url_for
         args = request.args.to_dict()
@@ -194,7 +194,7 @@ def build_page_url(page):
         return '#'
 
 def register_filters(app):
-    """注册所有过滤器"""
+    """Register all filters"""
     app.jinja_env.filters['truncate_text'] = truncate_text
     app.jinja_env.filters['datetime'] = datetime_format
     app.jinja_env.filters['timeago'] = timeago

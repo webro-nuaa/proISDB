@@ -88,7 +88,7 @@ def inspect_database(uri):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Inspect runtime database schema for InsertQ project')
+    parser = argparse.ArgumentParser(description='Inspect runtime database schema for proISDB project')
     parser.add_argument('--db-uri', help='数据库 URI，覆盖项目配置，例如 mysql+pymysql://user:pass@host/dbname?charset=utf8mb4')
     parser.add_argument('--json', action='store_true', help='以 JSON 格式输出到 stdout 或文件（配合 --output 使用）')
     parser.add_argument('--output', help='将 JSON 输出保存到指定文件路径（会覆盖或创建文件）')

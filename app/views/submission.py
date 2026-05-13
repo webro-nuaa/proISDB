@@ -24,7 +24,7 @@ def index():
 @limiter.limit("10 per hour; 3 per minute", methods=["POST"])
 def submit_element():
     """Submit IS element (visitor does not need login)"""
-    # log page view (only on GET)
+    # Log page view (only on GET)
     if request.method == 'GET':
         PageView.log_view(
             page_type='other',
@@ -140,7 +140,7 @@ def pending_review():
         flash('You do not have permission to access this page.', 'error')
         return redirect(url_for('main.index'))
     
-    # pagination parameters
+    # Pagination parameters
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
 

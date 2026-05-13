@@ -4,7 +4,7 @@
 Standardize an input Excel to the project's CSV template header order.
 
 Usage:
-  python scripts/standardize_excel_to_template.py --in "/home/webro/code/InsertQ/本地部署示数据(1).xlsx" \
+  python scripts/standardize_excel_to_template.py --in "/path/to/your/input_data.xlsx" \
        --template app/static/templates/is_element_template_full.csv \
        --out app/static/templates/is_element_template_standardized.xlsx
 

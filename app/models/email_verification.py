@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-邮箱验证模型
+Email verification model
 """
 from datetime import datetime, timezone, timedelta
 from app import db
@@ -8,7 +8,7 @@ import random
 import string
 
 class EmailVerification(db.Model):
-    """邮箱验证码模型"""
+    """Email verification code model"""
     __tablename__ = 'email_verifications'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -17,17 +17,17 @@ class EmailVerification(db.Model):
     verification_code = db.Column(db.String(6), nullable=False)
     purpose = db.Column(db.Enum('registration', 'email_change', 'password_reset'), default='email_change')
     is_verified = db.Column(db.Boolean, default=False)
-    attempts = db.Column(db.Integer, default=0)  # 验证尝试次数
-    max_attempts = db.Column(db.Integer, default=5)  # 最大尝试次数
+    attempts = db.Column(db.Integer, default=0)  # Verification attempts
+    max_attempts = db.Column(db.Integer, default=5)  # Max attempts
     expires_at = db.Column(db.DateTime, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     verified_at = db.Column(db.DateTime)
     
-    # 关系
+    # Relationship
     user = db.relationship('User', backref='email_verifications')
     
     def __init__(self, user_id, email, purpose='email_change', validity_minutes=15):
-        """初始化验证码"""
+        """Initialize verification code."""
         self.user_id = user_id
         self.email = email
         self.purpose = purpose
@@ -52,7 +52,7 @@ class EmailVerification(db.Model):
         return self.attempts >= self.max_attempts
     
     def verify(self, code):
-        """验证验证码"""
+        """Verify the verification code."""
         if self.is_verified:
             return False, '验证码已使用'
         

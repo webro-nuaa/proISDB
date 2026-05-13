@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-数据提交相关表单
+Data submission forms
 """
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, IntegerField, SelectField
@@ -171,7 +171,7 @@ class ISElementSubmissionForm(FlaskForm):
         Length(0, 1000, message='References must be at most 1000 characters')
     ])
     
-    # Submission Reason (stored in submission_history, not is_elements)
+    # Submission reason (stored in submission_history)
     submission_reason = TextAreaField('Submission Reason', validators=[
         Optional(),
         Length(0, 500, message='Submission reason must be at most 500 characters')
@@ -193,7 +193,7 @@ class ReviewForm(FlaskForm):
     ])
 
 class AdminISElementForm(FlaskForm):
-    """Admin IS element form - without submitter info requirements"""
+    """Admin IS element form - no submitter info requirements"""
     
     # IS Basic Information - Only name and family are required
     name = StringField('IS Name', validators=[
@@ -242,7 +242,7 @@ class AdminISElementForm(FlaskForm):
         NumberRange(min=1, message='Length must be greater than 0')
     ])
     
-    # Sequence Information (left_flank and right_flank are auto-calculated @property, not form fields)
+    # left_flank/right_flank are auto-calculated @property, not form fields
     le_cleavage_site = StringField('LE Cleavage Site', validators=[
         Optional(),
         Length(0, 100, message='LE cleavage site must be at most 100 characters')
