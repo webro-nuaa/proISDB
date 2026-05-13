@@ -50,24 +50,24 @@ nano .env
 sudo docker compose build
 sudo docker compose up -d
 
-# Create the root admin user
-sudo docker compose exec web flask create-root
-
 # Verify
 curl http://localhost/health
 ```
 
-The database is automatically initialized on container start. Access at `http://your-server-ip` (or `http://localhost` locally).
+Database init and root admin creation happen automatically on first start (via .env values). Access at `http://your-server-ip` (or `http://localhost` locally).
 
 > For HTTPS, set up a reverse proxy (Nginx). See `deploy/nginx.conf` for a reference config.
 
 ### Configure .env
 
-Only **2 values** must be changed for a Docker deployment. The rest are pre-set in `docker-compose.yml`.
+Only **5 values** must be changed for a Docker deployment. Fill them in and the root admin user is created automatically.
 
 ```
 MYSQL_PASSWORD=your-strong-password       # MySQL root password
 SECRET_KEY=generated-random-string        # Flask encryption key
+ROOT_USERNAME=root                        # Root admin username
+ROOT_EMAIL=admin@example.com              # Root admin email
+ROOT_PASSWORD=your-root-password          # Root admin password
 ```
 
 Generate a secret key:
@@ -78,14 +78,7 @@ python -c "import secrets; print(secrets.token_hex(32))"
 
 ### First-time Setup
 
-After starting the services, create the root admin account:
-
-```bash
-# Create root super-admin (interactive prompts)
-sudo docker compose exec web flask create-root
-```
-
-Database tables and default configs are initialized automatically on container start.
+No manual steps needed — database tables, default configs, and the root admin user are all created automatically on first container start (driven by your `.env` values).
 
 ## Architecture
 
@@ -190,7 +183,7 @@ sudo docker compose up -d
 
 ```bash
 # Manage the app
-sudo docker compose exec web flask create-root     # Create root admin user
+sudo docker compose exec web flask create-root     # Create root admin (manual override)
 sudo docker compose exec web flask reset-db         # Recreate all tables (--drop to wipe first)
 sudo docker compose exec web flask test             # Run test suite
 ```

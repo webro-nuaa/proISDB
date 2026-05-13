@@ -28,11 +28,25 @@ def make_shell_context():
     }
 
 @app.cli.command()
-@click.option('--username', prompt=True, help='Root username')
-@click.option('--email', prompt=True, help='Root email')
-@click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True, help='Root password')
-def create_root(username, email, password):
+@click.option('--username', prompt=True, help='Root username',
+              envvar='ROOT_USERNAME')
+@click.option('--email', prompt=True, help='Root email',
+              envvar='ROOT_EMAIL')
+@click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True,
+              help='Root password', envvar='ROOT_PASSWORD')
+@click.option('--auto-create', is_flag=True, hidden=True,
+              help='Non-interactive mode: skip if root or env vars not set')
+def create_root(username, email, password, auto_create):
     """Create root super-admin user."""
+    if auto_create:
+        if not (username and email and password):
+            click.echo('Root user env vars not configured. Set ROOT_USERNAME, ROOT_EMAIL, ROOT_PASSWORD in .env')
+            return
+        existing = User.query.filter_by(role='root').first()
+        if existing:
+            click.echo(f'Root user already exists ({existing.username}). Skipping.')
+            return
+
     user = User.query.filter_by(username=username).first()
     if user:
         click.echo(f'User {username} already exists.')
